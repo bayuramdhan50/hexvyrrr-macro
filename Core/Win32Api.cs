@@ -19,6 +19,11 @@ namespace PbRecoil.Core
         public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
         public const uint MOUSEEVENTF_LEFTUP   = 0x0004;
 
+        // ── Windows Hook & Messages ────────────────────────────────────────────
+        public const int WH_MOUSE_LL    = 14;
+        public const int WM_LBUTTONDOWN = 0x0201;
+        public const int WM_LBUTTONUP   = 0x0202;
+
         // ── Input Type Constants ───────────────────────────────────────────────
         public const uint INPUT_MOUSE = 0;
 
@@ -28,7 +33,23 @@ namespace PbRecoil.Core
         public const int WS_EX_LAYERED     = 0x00080000;
         public const int WS_EX_TOOLWINDOW  = 0x00000080;
 
+        // ── Delegates ───────────────────────────────────────────────────────────
+        public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
+
         // ── P/Invoke Declarations ───────────────────────────────────────────────
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr GetModuleHandle(string? lpModuleName);
+
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
@@ -60,6 +81,23 @@ namespace PbRecoil.Core
         public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
         // ── Structs ─────────────────────────────────────────────────────────────
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MSLLHOOKSTRUCT
+        {
+            public POINT   pt;
+            public uint    mouseData;
+            public uint    flags; // LLMHF_INJECTED = 0x00000001
+            public uint    time;
+            public UIntPtr dwExtraInfo;
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         public struct MOUSEINPUT
         {

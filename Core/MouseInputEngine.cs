@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,21 +8,25 @@ namespace PbRecoil.Core
 {
     /// <summary>
     /// Engine Auto-Tap & Anti-Recoil Point Blank dengan algoritma hardcoded berkecepatan tinggi.
-    /// Berjalan pada dedicated high-priority background thread dengan resolusi 1ms.
+    /// Menggunakan WH_MOUSE_LL Hook agar pendeteksian tombol fisik mouse (HOLD) tidak terganggu oleh SendInput.
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
         // ── Parameter Hardcode Optimal Point Blank ──────────────────────────────
-        private const int ShotHoldMs         = 35; // Durasi penahanan klik agar 1 peluru tertembak sempurna
-        private const int ReleaseRecoveryMs  = 35; // Jeda pelepasan klik agar akurasi crosshair reset (anti-spread)
-        private const int VerticalPullPixels = 5;  // Kekuatan tarikan recoil vertikal ke bawah per shot (px)
-        private const int SmoothSteps        = 2;  // Pembagian langkah tarikan agar pergerakan mouse mulus
-        private const int JitterRange        = 1;  // Humanizer jitter acak (-1 sampai +1 px) untuk bypass heurisitk
+        private const int ShotHoldMs         = 35; // Durasi penahanan klik per peluru (ms)
+        private const int ReleaseRecoveryMs  = 35; // Jeda pelepasan klik untuk reset crosshair bloom (ms)
+        private const int VerticalPullPixels = 5;  // Kekuatan tarikan recoil vertikal per shot (px)
+        private const int SmoothSteps        = 2;  // Langkah pembagian tarikan mouse
+        private const int JitterRange        = 1;  // Humanizer jitter acak (±1 px)
 
         private readonly Random _random = new();
+        private readonly Win32Api.LowLevelMouseProc _hookProc;
+        private IntPtr _hookHandle = IntPtr.Zero;
+
         private Thread? _workerThread;
         private volatile bool _isDisposed;
         private volatile bool _isEnabled;
+        private volatile bool _isPhysicalLmbDown;
         private volatile bool _isFiring;
 
         public bool IsEnabled
@@ -44,8 +49,15 @@ namespace PbRecoil.Core
         public event Action<bool>? OnFiringStateChanged;
         public event Action? OnRecoilTick;
 
+        public MouseInputEngine()
+        {
+            _hookProc = HookCallback;
+        }
+
         public void Start()
         {
+            InstallHook();
+
             if (_workerThread != null && _workerThread.IsAlive) return;
 
             _isDisposed = false;
@@ -61,6 +73,42 @@ namespace PbRecoil.Core
         public void Toggle()
         {
             IsEnabled = !IsEnabled;
+        }
+
+        private void InstallHook()
+        {
+            if (_hookHandle != IntPtr.Zero) return;
+
+            using var curProcess = Process.GetCurrentProcess();
+            using var curModule = curProcess.MainModule;
+            var hMod = Win32Api.GetModuleHandle(curModule?.ModuleName);
+            _hookHandle = Win32Api.SetWindowsHookEx(Win32Api.WH_MOUSE_LL, _hookProc, hMod, 0);
+        }
+
+        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0)
+            {
+                var hookStruct = Marshal.PtrToStructure<Win32Api.MSLLHOOKSTRUCT>(lParam);
+                // Bit 0 pada flags menandakan input hasil injeksi (SendInput/mouse_event)
+                bool isInjected = (hookStruct.flags & 1) != 0;
+
+                // Hanya proses klik hardware fisik dari pengguna (bukan injeksi engine)
+                if (!isInjected)
+                {
+                    var msg = wParam.ToInt32();
+                    if (msg == Win32Api.WM_LBUTTONDOWN)
+                    {
+                        _isPhysicalLmbDown = true;
+                    }
+                    else if (msg == Win32Api.WM_LBUTTONUP)
+                    {
+                        _isPhysicalLmbDown = false;
+                    }
+                }
+            }
+
+            return Win32Api.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
         }
 
         private void WorkerLoop()
@@ -83,10 +131,8 @@ namespace PbRecoil.Core
                         continue;
                     }
 
-                    // Deteksi kondisi fisik apakah Tombol Mouse Kiri (LMB) sedang ditekan/ditahan (HOLD)
-                    var isLmbPressed = Win32Api.IsKeyPressed(Win32Api.VK_LBUTTON);
-
-                    if (isLmbPressed)
+                    // Selama tombol Mouse Kiri fisik di-HOLD oleh pengguna dan Engine aktif
+                    if (_isPhysicalLmbDown)
                     {
                         if (!_isFiring)
                         {
@@ -94,7 +140,7 @@ namespace PbRecoil.Core
                             OnFiringStateChanged?.Invoke(true);
                         }
 
-                        // Eksekusi 1 siklus Auto-Tap + Recoil Pull
+                        // Siklus Auto-Tap + Recoil Pull berulang (Continuous Looping)
                         ExecuteTapCycle();
                     }
                     else
@@ -103,7 +149,6 @@ namespace PbRecoil.Core
                         {
                             _isFiring = false;
                             OnFiringStateChanged?.Invoke(false);
-                            // Safety release saat tombol fisik dilepas pemain
                             Win32Api.SendMouseUp();
                         }
 
@@ -119,12 +164,12 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mengeksekusi satu siklus lengkap tembakan tap:
+        /// Mengeksekusi 1 siklus tembakan tap:
         /// 1. Trigger Klik Kiri (LMB Down)
-        /// 2. Tahan ~35ms untuk pelepasan 1 peluru
+        /// 2. Tahan ~35ms untuk pelepasan peluru
         /// 3. Tarik recoil ke bawah dengan smoothing + jitter
         /// 4. Lepas Klik Kiri (LMB Up)
-        /// 5. Jeda pemulihan ~35ms agar crosshair bloom reset
+        /// 5. Jeda pemulihan ~35ms agar spread bloom reset
         /// </summary>
         private void ExecuteTapCycle()
         {
@@ -135,20 +180,19 @@ namespace PbRecoil.Core
             // 2. Durasi peluru melesat keluar
             PreciseSleep(ShotHoldMs);
 
-            // 3. Tarik recoil vertikal dengan pembagian smooth step
+            // 3. Tarik recoil vertikal ke bawah
             var subY = (double)VerticalPullPixels / SmoothSteps;
             var stepDelay = Math.Max(1, 10 / SmoothSteps);
             double accY = 0;
 
             for (int i = 0; i < SmoothSteps; i++)
             {
-                if (!_isEnabled || !Win32Api.IsKeyPressed(Win32Api.VK_LBUTTON)) break;
+                if (!_isEnabled || !_isPhysicalLmbDown) break;
 
                 accY += subY;
                 var dy = (int)Math.Round(accY);
                 accY -= dy;
 
-                // Tambahkan random humanizer jitter
                 var jitterX = _random.Next(-JitterRange, JitterRange + 1);
                 var jitterY = _random.Next(-JitterRange, JitterRange + 1);
 
@@ -156,19 +200,21 @@ namespace PbRecoil.Core
                 PreciseSleep(stepDelay);
             }
 
-            // 4. Lepas klik tembak untuk menghentikan peluru liar / spread
+            // 4. Lepas klik tembak untuk reset spread & crosshair
             Win32Api.SendMouseUp();
 
             // 5. Jeda recovery sebelum tap berikutnya dimulai
             PreciseSleep(ReleaseRecoveryMs);
         }
 
-        private static void PreciseSleep(int ms)
+        private void PreciseSleep(int ms)
         {
             if (ms <= 0) return;
             var sw = Stopwatch.StartNew();
             while (sw.ElapsedMilliseconds < ms)
             {
+                if (!_isPhysicalLmbDown || !_isEnabled) break;
+
                 if (ms - sw.ElapsedMilliseconds > 2)
                     Thread.Sleep(1);
                 else
@@ -205,6 +251,14 @@ namespace PbRecoil.Core
         {
             _isDisposed = true;
             _isEnabled  = false;
+            _isPhysicalLmbDown = false;
+
+            if (_hookHandle != IntPtr.Zero)
+            {
+                Win32Api.UnhookWindowsHookEx(_hookHandle);
+                _hookHandle = IntPtr.Zero;
+            }
+
             Win32Api.SendMouseUp();
         }
     }
