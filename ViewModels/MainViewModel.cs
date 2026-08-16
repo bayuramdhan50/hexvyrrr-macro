@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using PbRecoil.Core;
+using WpfApplication = System.Windows.Application;
 
 namespace PbRecoil.ViewModels
 {
@@ -60,7 +61,7 @@ namespace PbRecoil.ViewModels
             // Sync state dari engine ke ViewModel
             _engine.OnStateChanged += state =>
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                WpfApplication.Current?.Dispatcher.Invoke(() =>
                 {
                     _isEngineActive = state;
                     OnPropertyChanged(nameof(IsEngineActive));
@@ -73,7 +74,7 @@ namespace PbRecoil.ViewModels
 
             _engine.OnFiringStateChanged += firing =>
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                WpfApplication.Current?.Dispatcher.Invoke(() =>
                 {
                     IsFiring = firing;
                 });
@@ -82,7 +83,7 @@ namespace PbRecoil.ViewModels
             // F1 — Toggle Engine
             _hotkeyManager.OnToggleEngine += () =>
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                WpfApplication.Current?.Dispatcher.Invoke(() =>
                 {
                     IsEngineActive = !IsEngineActive;
                 });
@@ -91,7 +92,7 @@ namespace PbRecoil.ViewModels
             // F2 — Toggle HUD Overlay
             _hotkeyManager.OnToggleOverlay += () =>
             {
-                Application.Current.Dispatcher.Invoke(ToggleOverlay);
+                WpfApplication.Current?.Dispatcher.Invoke(ToggleOverlay);
             };
         }
 

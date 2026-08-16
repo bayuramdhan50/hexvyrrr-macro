@@ -13,9 +13,9 @@ namespace PbRecoil.Core
     public class MouseInputEngine : IDisposable
     {
         // ── Parameter Hardcode Optimal Point Blank ──────────────────────────────
-        private const int ShotHoldMs         = 35; // Durasi penahanan klik per peluru (ms)
-        private const int ReleaseRecoveryMs  = 35; // Jeda pelepasan klik untuk reset crosshair bloom (ms)
-        private const int VerticalPullPixels = 5;  // Kekuatan tarikan recoil vertikal per shot (px)
+        private const int ShotHoldMs         = 1; // Durasi penahanan klik per peluru (ms)
+        private const int ReleaseRecoveryMs  = 1; // Jeda pelepasan klik untuk reset crosshair bloom (ms)
+        private const int VerticalPullPixels = 0;  // Kekuatan tarikan recoil vertikal per shot (px)
         private const int SmoothSteps        = 2;  // Langkah pembagian tarikan mouse
         private const int JitterRange        = 1;  // Humanizer jitter acak (±1 px)
 

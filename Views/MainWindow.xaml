@@ -65,11 +65,20 @@
                                    VerticalAlignment="Center" Margin="6,0,0,0"/>
                     </StackPanel>
 
-                    <!-- Tombol Tutup -->
-                    <Button Grid.Column="1" Content="✕" Width="24" Height="24"
-                            Background="Transparent" BorderThickness="0"
-                            Foreground="#8B949E" FontSize="12" Cursor="Hand"
-                            Click="CloseButton_Click"/>
+                    <!-- Window Control Buttons (Minimize & Close) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="—" Width="24" Height="24" Margin="0,0,4,0"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="#8B949E" FontSize="11" Cursor="Hand"
+                                ToolTip="Minimize ke System Tray"
+                                Click="MinimizeButton_Click"/>
+
+                        <Button Content="✕" Width="24" Height="24"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="#8B949E" FontSize="12" Cursor="Hand"
+                                ToolTip="Tutup Aplikasi"
+                                Click="CloseButton_Click"/>
+                    </StackPanel>
                 </Grid>
             </Border>
 

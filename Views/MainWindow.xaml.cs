@@ -1,5 +1,7 @@
 using System;
+using System.Drawing;
 using System.Windows;
+using Forms = System.Windows.Forms;
 using PbRecoil.ViewModels;
 
 namespace PbRecoil.Views
@@ -8,6 +10,7 @@ namespace PbRecoil.Views
     {
         private readonly MainViewModel _viewModel;
         private OverlayWindow? _overlayWindow;
+        private Forms.NotifyIcon? _notifyIcon;
 
         public MainWindow()
         {
@@ -27,6 +30,8 @@ namespace PbRecoil.Views
                 else           _overlayWindow.Hide();
             };
 
+            InitializeSystemTray();
+
             Loaded += (s, e) =>
             {
                 _viewModel.Initialize();
@@ -36,8 +41,70 @@ namespace PbRecoil.Views
             Closed += (s, e) =>
             {
                 _overlayWindow?.Close();
+                _notifyIcon?.Dispose();
                 _viewModel.Dispose();
             };
+        }
+
+        private void InitializeSystemTray()
+        {
+            var contextMenu = new Forms.ContextMenuStrip();
+
+            var openItem = new Forms.ToolStripMenuItem("Buka PB Recoil", null, (s, e) => RestoreFromTray())
+            {
+                Font = new Font(Forms.Control.DefaultFont, System.Drawing.FontStyle.Bold)
+            };
+            contextMenu.Items.Add(openItem);
+
+            var toggleEngineItem = new Forms.ToolStripMenuItem("Toggle Engine (F1)", null, (s, e) =>
+            {
+                _viewModel.IsEngineActive = !_viewModel.IsEngineActive;
+            });
+            contextMenu.Items.Add(toggleEngineItem);
+
+            var toggleOverlayItem = new Forms.ToolStripMenuItem("Toggle HUD Overlay (F2)", null, (s, e) =>
+            {
+                _viewModel.ToggleOverlay();
+            });
+            contextMenu.Items.Add(toggleOverlayItem);
+
+            contextMenu.Items.Add(new Forms.ToolStripSeparator());
+
+            var exitItem = new Forms.ToolStripMenuItem("Keluar", null, (s, e) =>
+            {
+                _notifyIcon?.Dispose();
+                _notifyIcon = null;
+                System.Windows.Application.Current.Shutdown();
+            });
+            contextMenu.Items.Add(exitItem);
+
+            _notifyIcon = new Forms.NotifyIcon
+            {
+                Icon = SystemIcons.Shield,
+                Text = "PB Auto-Tap & Anti-Recoil",
+                Visible = true,
+                ContextMenuStrip = contextMenu
+            };
+
+            _notifyIcon.DoubleClick += (s, e) => RestoreFromTray();
+        }
+
+        private void RestoreFromTray()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            Hide();
+            _notifyIcon?.ShowBalloonTip(
+                1200,
+                "PB Auto-Tap",
+                "Aplikasi diminimalkan ke System Tray. Klik ganda ikon untuk membuka kembali.",
+                Forms.ToolTipIcon.Info
+            );
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
