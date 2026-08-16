@@ -51,6 +51,42 @@ namespace PbRecoil.Core
         [DllImport("kernel32.dll")]
         public static extern bool Beep(uint dwFreq, uint dwDuration);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct INPUT
+        {
+            public uint type;
+            public MOUSEINPUT mi;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        public const uint INPUT_MOUSE = 0;
+
+        public static void SendMouseMove(int dx, int dy)
+        {
+            var inputs = new INPUT[1];
+            inputs[0].type = INPUT_MOUSE;
+            inputs[0].mi.dx = dx;
+            inputs[0].mi.dy = dy;
+            inputs[0].mi.dwFlags = MOUSEEVENTF_MOVE;
+            inputs[0].mi.time = 0;
+            inputs[0].mi.dwExtraInfo = UIntPtr.Zero;
+
+            SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+        }
+
         public static bool IsKeyPressed(int vKey)
         {
             return (GetAsyncKeyState(vKey) & 0x8000) != 0;

@@ -135,7 +135,7 @@ namespace PbRecoil.Core
 
                 if (dx != 0 || dy != 0)
                 {
-                    Win32Api.mouse_event(Win32Api.MOUSEEVENTF_MOVE, dx, dy, 0, UIntPtr.Zero);
+                    Win32Api.SendMouseMove(dx, dy);
                 }
 
                 PreciseSleep(stepDelay);
@@ -167,18 +167,23 @@ namespace PbRecoil.Core
                 {
                     if (enabled)
                     {
-                        // Nada tinggi indikator ON (1000 Hz, 120ms)
-                        Win32Api.Beep(1000, 120);
+                        Console.Beep(1000, 120);
                     }
                     else
                     {
-                        // Nada rendah indikator OFF (450 Hz, 120ms)
-                        Win32Api.Beep(450, 120);
+                        Console.Beep(450, 120);
                     }
                 }
                 catch
                 {
-                    // Abaikan jika device tidak support hardware beep
+                    try
+                    {
+                        if (enabled)
+                            System.Media.SystemSounds.Asterisk.Play();
+                        else
+                            System.Media.SystemSounds.Hand.Play();
+                    }
+                    catch { }
                 }
             });
         }
