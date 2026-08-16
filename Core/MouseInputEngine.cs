@@ -2,17 +2,27 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using PbRecoil.Models;
 
 namespace PbRecoil.Core
 {
+    /// <summary>
+    /// Engine Auto-Tap & Anti-Recoil Point Blank dengan algoritma hardcoded berkecepatan tinggi.
+    /// Berjalan pada dedicated high-priority background thread dengan resolusi 1ms.
+    /// </summary>
     public class MouseInputEngine : IDisposable
     {
+        // ── Parameter Hardcode Optimal Point Blank ──────────────────────────────
+        private const int ShotHoldMs         = 35; // Durasi penahanan klik agar 1 peluru tertembak sempurna
+        private const int ReleaseRecoveryMs  = 35; // Jeda pelepasan klik agar akurasi crosshair reset (anti-spread)
+        private const int VerticalPullPixels = 5;  // Kekuatan tarikan recoil vertikal ke bawah per shot (px)
+        private const int SmoothSteps        = 2;  // Pembagian langkah tarikan agar pergerakan mouse mulus
+        private const int JitterRange        = 1;  // Humanizer jitter acak (-1 sampai +1 px) untuk bypass heurisitk
+
         private readonly Random _random = new();
         private Thread? _workerThread;
         private volatile bool _isDisposed;
         private volatile bool _isEnabled;
-        private WeaponPreset? _activePreset;
+        private volatile bool _isFiring;
 
         public bool IsEnabled
         {
@@ -28,13 +38,10 @@ namespace PbRecoil.Core
             }
         }
 
-        public WeaponPreset? ActivePreset
-        {
-            get => _activePreset;
-            set => _activePreset = value;
-        }
+        public bool IsFiring => _isFiring;
 
         public event Action<bool>? OnStateChanged;
+        public event Action<bool>? OnFiringStateChanged;
         public event Action? OnRecoilTick;
 
         public void Start()
@@ -59,87 +66,101 @@ namespace PbRecoil.Core
         private void WorkerLoop()
         {
             Win32Api.TimeBeginPeriod(1);
-            var stopwatch = new Stopwatch();
 
             try
             {
                 while (!_isDisposed)
                 {
-                    if (!_isEnabled || _activePreset == null)
+                    if (!_isEnabled)
                     {
+                        if (_isFiring)
+                        {
+                            _isFiring = false;
+                            OnFiringStateChanged?.Invoke(false);
+                            Win32Api.SendMouseUp();
+                        }
                         Thread.Sleep(10);
                         continue;
                     }
 
+                    // Deteksi kondisi fisik apakah Tombol Mouse Kiri (LMB) sedang ditekan/ditahan (HOLD)
                     var isLmbPressed = Win32Api.IsKeyPressed(Win32Api.VK_LBUTTON);
-                    var isRmbPressed = Win32Api.IsKeyPressed(Win32Api.VK_RBUTTON);
 
-                    // Evaluasi kondisi tembak
-                    var shouldTrigger = isLmbPressed && (!_activePreset.ScopeOnly || isRmbPressed);
-
-                    if (shouldTrigger)
+                    if (isLmbPressed)
                     {
-                        ExecuteRecoilStep(_activePreset);
-                        OnRecoilTick?.Invoke();
+                        if (!_isFiring)
+                        {
+                            _isFiring = true;
+                            OnFiringStateChanged?.Invoke(true);
+                        }
+
+                        // Eksekusi 1 siklus Auto-Tap + Recoil Pull
+                        ExecuteTapCycle();
                     }
                     else
                     {
-                        // Polling idle cepat saat tombol dilepas
+                        if (_isFiring)
+                        {
+                            _isFiring = false;
+                            OnFiringStateChanged?.Invoke(false);
+                            // Safety release saat tombol fisik dilepas pemain
+                            Win32Api.SendMouseUp();
+                        }
+
                         Thread.Sleep(1);
                     }
                 }
             }
             finally
             {
+                Win32Api.SendMouseUp();
                 Win32Api.TimeEndPeriod(1);
             }
         }
 
-        private void ExecuteRecoilStep(WeaponPreset preset)
+        /// <summary>
+        /// Mengeksekusi satu siklus lengkap tembakan tap:
+        /// 1. Trigger Klik Kiri (LMB Down)
+        /// 2. Tahan ~35ms untuk pelepasan 1 peluru
+        /// 3. Tarik recoil ke bawah dengan smoothing + jitter
+        /// 4. Lepas Klik Kiri (LMB Up)
+        /// 5. Jeda pemulihan ~35ms agar crosshair bloom reset
+        /// </summary>
+        private void ExecuteTapCycle()
         {
-            var totalY = preset.VerticalRecoil;
-            var totalX = preset.HorizontalRecoil;
-            var steps = Math.Max(1, preset.SmoothStep);
-            var delayMs = Math.Max(1, preset.DelayMs);
-            var stepDelay = Math.Max(1, delayMs / steps);
+            // 1. Simulasikan klik tembak
+            Win32Api.SendMouseDown();
+            OnRecoilTick?.Invoke();
 
-            var subY = (double)totalY / steps;
-            var subX = (double)totalX / steps;
+            // 2. Durasi peluru melesat keluar
+            PreciseSleep(ShotHoldMs);
 
-            double accumulatedY = 0;
-            double accumulatedX = 0;
+            // 3. Tarik recoil vertikal dengan pembagian smooth step
+            var subY = (double)VerticalPullPixels / SmoothSteps;
+            var stepDelay = Math.Max(1, 10 / SmoothSteps);
+            double accY = 0;
 
-            for (int i = 0; i < steps; i++)
+            for (int i = 0; i < SmoothSteps; i++)
             {
-                // Cek ulang apakah tombol masih ditekan di tengah pembagian step
-                if (!Win32Api.IsKeyPressed(Win32Api.VK_LBUTTON) || !_isEnabled)
-                {
-                    break;
-                }
+                if (!_isEnabled || !Win32Api.IsKeyPressed(Win32Api.VK_LBUTTON)) break;
 
-                accumulatedY += subY;
-                accumulatedX += subX;
+                accY += subY;
+                var dy = (int)Math.Round(accY);
+                accY -= dy;
 
-                var dy = (int)Math.Round(accumulatedY);
-                var dx = (int)Math.Round(accumulatedX);
+                // Tambahkan random humanizer jitter
+                var jitterX = _random.Next(-JitterRange, JitterRange + 1);
+                var jitterY = _random.Next(-JitterRange, JitterRange + 1);
 
-                accumulatedY -= dy;
-                accumulatedX -= dx;
-
-                // Penambahan jitter alami (humanizer)
-                if (preset.Jitter > 0)
-                {
-                    var jitterOffset = _random.Next(-preset.Jitter, preset.Jitter + 1);
-                    dy += jitterOffset;
-                }
-
-                if (dx != 0 || dy != 0)
-                {
-                    Win32Api.SendMouseMove(dx, dy);
-                }
-
+                Win32Api.SendMouseMove(jitterX, dy + jitterY);
                 PreciseSleep(stepDelay);
             }
+
+            // 4. Lepas klik tembak untuk menghentikan peluru liar / spread
+            Win32Api.SendMouseUp();
+
+            // 5. Jeda recovery sebelum tap berikutnya dimulai
+            PreciseSleep(ReleaseRecoveryMs);
         }
 
         private static void PreciseSleep(int ms)
@@ -149,13 +170,9 @@ namespace PbRecoil.Core
             while (sw.ElapsedMilliseconds < ms)
             {
                 if (ms - sw.ElapsedMilliseconds > 2)
-                {
                     Thread.Sleep(1);
-                }
                 else
-                {
-                    Thread.SpinWait(10);
-                }
+                    Thread.SpinWait(15);
             }
         }
 
@@ -166,13 +183,9 @@ namespace PbRecoil.Core
                 try
                 {
                     if (enabled)
-                    {
-                        Console.Beep(1000, 120);
-                    }
+                        Console.Beep(1000, 100);
                     else
-                    {
-                        Console.Beep(450, 120);
-                    }
+                        Console.Beep(450, 100);
                 }
                 catch
                 {
@@ -191,7 +204,8 @@ namespace PbRecoil.Core
         public void Dispose()
         {
             _isDisposed = true;
-            _isEnabled = false;
+            _isEnabled  = false;
+            Win32Api.SendMouseUp();
         }
     }
 }

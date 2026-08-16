@@ -6,24 +6,29 @@ namespace PbRecoil.Core
 {
     public static class Win32Api
     {
-        // Virtual Key Codes
+        // ── Mouse Button Virtual Keys ──────────────────────────────────────────
         public const int VK_LBUTTON = 0x01;
         public const int VK_RBUTTON = 0x02;
-        public const int VK_F6 = 0x75;
-        public const int VK_F7 = 0x76;
-        public const int VK_F8 = 0x77;
-        public const int VK_INSERT = 0x2D;
-        public const int VK_DELETE = 0x2E;
 
-        // Mouse Event Flags
-        public const uint MOUSEEVENTF_MOVE = 0x0001;
+        // ── Function Key Virtual Keys ──────────────────────────────────────────
+        public const int VK_F1 = 0x70;
+        public const int VK_F2 = 0x71;
 
-        // Window Styles for Click-Through Transparent Overlay
-        public const int GWL_EXSTYLE = -20;
+        // ── Mouse Event Flags ──────────────────────────────────────────────────
+        public const uint MOUSEEVENTF_MOVE     = 0x0001;
+        public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+        public const uint MOUSEEVENTF_LEFTUP   = 0x0004;
+
+        // ── Input Type Constants ───────────────────────────────────────────────
+        public const uint INPUT_MOUSE = 0;
+
+        // ── Window Style Constants (Click-Through Overlay) ─────────────────────
+        public const int GWL_EXSTYLE       = -20;
         public const int WS_EX_TRANSPARENT = 0x00000020;
-        public const int WS_EX_LAYERED = 0x00080000;
-        public const int WS_EX_TOOLWINDOW = 0x00000080;
+        public const int WS_EX_LAYERED     = 0x00080000;
+        public const int WS_EX_TOOLWINDOW  = 0x00000080;
 
+        // ── P/Invoke Declarations ───────────────────────────────────────────────
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
@@ -54,35 +59,63 @@ namespace PbRecoil.Core
         [DllImport("user32.dll", SetLastError = true)]
         public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct INPUT
-        {
-            public uint type;
-            public MOUSEINPUT mi;
-        }
-
+        // ── Structs ─────────────────────────────────────────────────────────────
         [StructLayout(LayoutKind.Sequential)]
         public struct MOUSEINPUT
         {
-            public int dx;
-            public int dy;
-            public uint mouseData;
-            public uint dwFlags;
-            public uint time;
+            public int     dx;
+            public int     dy;
+            public uint    mouseData;
+            public uint    dwFlags;
+            public uint    time;
             public UIntPtr dwExtraInfo;
         }
 
-        public const uint INPUT_MOUSE = 0;
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KEYBDINPUT
+        {
+            public ushort  wVk;
+            public ushort  wScan;
+            public uint    dwFlags;
+            public uint    time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct INPUT
+        {
+            [FieldOffset(0)] public uint       type;
+            [FieldOffset(4)] public MOUSEINPUT mi;
+            [FieldOffset(4)] public KEYBDINPUT ki;
+        }
+
+        // ── Mouse Simulation Helpers ────────────────────────────────────────────
 
         public static void SendMouseMove(int dx, int dy)
         {
             var inputs = new INPUT[1];
-            inputs[0].type = INPUT_MOUSE;
-            inputs[0].mi.dx = dx;
-            inputs[0].mi.dy = dy;
+            inputs[0].type       = INPUT_MOUSE;
+            inputs[0].mi.dx      = dx;
+            inputs[0].mi.dy      = dy;
             inputs[0].mi.dwFlags = MOUSEEVENTF_MOVE;
-            inputs[0].mi.time = 0;
-            inputs[0].mi.dwExtraInfo = UIntPtr.Zero;
+
+            SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+        }
+
+        public static void SendMouseDown()
+        {
+            var inputs = new INPUT[1];
+            inputs[0].type       = INPUT_MOUSE;
+            inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+
+            SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+        }
+
+        public static void SendMouseUp()
+        {
+            var inputs = new INPUT[1];
+            inputs[0].type       = INPUT_MOUSE;
+            inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
 
             SendInput(1, inputs, Marshal.SizeOf<INPUT>());
         }
@@ -96,13 +129,9 @@ namespace PbRecoil.Core
         {
             var handle = GetForegroundWindow();
             if (handle == IntPtr.Zero) return string.Empty;
-            
+
             var sb = new StringBuilder(256);
-            if (GetWindowText(handle, sb, 256) > 0)
-            {
-                return sb.ToString();
-            }
-            return string.Empty;
+            return GetWindowText(handle, sb, 256) > 0 ? sb.ToString() : string.Empty;
         }
     }
 }

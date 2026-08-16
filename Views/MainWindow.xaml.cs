@@ -1,8 +1,5 @@
 using System;
-using System.Threading.Tasks;
 using System.Windows;
-using PbRecoil.Models;
-using PbRecoil.Services;
 using PbRecoil.ViewModels;
 
 namespace PbRecoil.Views
@@ -16,41 +13,24 @@ namespace PbRecoil.Views
         {
             InitializeComponent();
 
-            // Dependency Injection & Inisialisasi Service
-            IStorageService storageService = new JsonStorageService();
-            IPresetService presetService = new PresetService(storageService);
-            _viewModel = new MainViewModel(presetService);
-
+            _viewModel = new MainViewModel();
             DataContext = _viewModel;
 
-            // Inisialisasi Overlay Window
             _overlayWindow = new OverlayWindow
             {
                 DataContext = _viewModel
             };
 
-            // Event Listeners dari ViewModel
             _viewModel.RequestOverlayVisibility += isVisible =>
             {
-                if (isVisible)
-                {
-                    _overlayWindow.Show();
-                }
-                else
-                {
-                    _overlayWindow.Hide();
-                }
+                if (isVisible) _overlayWindow.Show();
+                else           _overlayWindow.Hide();
             };
 
-            _viewModel.RequestPresetEditor += ShowPresetEditorDialogAsync;
-
-            Loaded += async (s, e) =>
+            Loaded += (s, e) =>
             {
-                await _viewModel.InitializeAsync();
-                if (_viewModel.IsOverlayActive)
-                {
-                    _overlayWindow.Show();
-                }
+                _viewModel.Initialize();
+                if (_viewModel.IsOverlayActive) _overlayWindow.Show();
             };
 
             Closed += (s, e) =>
@@ -60,19 +40,14 @@ namespace PbRecoil.Views
             };
         }
 
-        private Task<WeaponPreset?> ShowPresetEditorDialogAsync(WeaponPreset preset)
+        private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            var dialog = new PresetEditorDialog(preset)
-            {
-                Owner = this
-            };
+            if (e.ClickCount == 1) DragMove();
+        }
 
-            if (dialog.ShowDialog() == true)
-            {
-                return Task.FromResult<WeaponPreset?>(dialog.Preset);
-            }
-
-            return Task.FromResult<WeaponPreset?>(null);
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

@@ -8,76 +8,80 @@
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        Width="320" Height="140"
-        Left="20" Top="20"
+        Width="260" Height="96"
+        Left="24" Top="24"
         IsHitTestVisible="False">
+
     <Window.Resources>
         <converters:StatusBorderConverter x:Key="StatusBorderConverter"/>
-        <converters:StatusBgConverter x:Key="StatusBgConverter"/>
-        <converters:StatusTextConverter x:Key="StatusTextConverter"/>
+        <converters:StatusBgConverter     x:Key="StatusBgConverter"/>
+        <converters:StatusTextConverter   x:Key="StatusTextConverter"/>
+        <converters:FiringColorConverter  x:Key="FiringColorConverter"/>
     </Window.Resources>
-    <Border CornerRadius="8"
-            Background="#E60D1117"
+
+    <Border CornerRadius="10"
+            Background="#E60A0E17"
             BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
             BorderThickness="1.5"
-            Padding="12"
-            Margin="6">
+            Padding="12,10"
+            Margin="4">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#000000" Opacity="0.8"/>
+            <DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#000000" Opacity="0.9"/>
         </Border.Effect>
+
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header HUD -->
+            <!-- Header Row -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="PB RECOIL" FontWeight="Bold" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Text=" // HUD" Foreground="#8B949E" FontSize="11" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Margin="0,0,6,0"
+                             Fill="{Binding IsFiring, Converter={StaticResource FiringColorConverter}}">
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="6" ShadowDepth="0"
+                                              Color="{Binding IsFiring, Converter={StaticResource FiringColorConverter}}"
+                                              Opacity="0.9"/>
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <TextBlock Text="PB AUTO-TAP" FontWeight="ExtraBold" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text=" // HUD" Foreground="#6E7681" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Status Badge -->
-                <Border Grid.Column="1" CornerRadius="4" Padding="6,2"
-                        Background="{Binding IsEngineActive, Converter={StaticResource StatusBgConverter}}">
+                <Border Grid.Column="1" CornerRadius="4" Padding="8,2"
+                        Background="{Binding IsEngineActive, Converter={StaticResource StatusBgConverter}}"
+                        BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
+                        BorderThickness="1">
                     <TextBlock Text="{Binding StatusHeader}" 
-                               FontWeight="Bold" FontSize="10"
+                               FontWeight="Black" FontSize="10"
                                Foreground="{Binding IsEngineActive, Converter={StaticResource StatusTextConverter}}"/>
                 </Border>
             </Grid>
 
-            <!-- Active Weapon Name -->
-            <TextBlock Grid.Row="1" 
-                       Text="{Binding SelectedPreset.Name, TargetNullValue='No Weapon Selected'}"
-                       FontWeight="ExtraBold" FontSize="16" Foreground="#F0F6FC"
-                       Margin="0,4,0,2" TextTrimming="CharacterEllipsis"/>
-
-            <!-- Parameters Preview -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
-                <Border Background="#161B22" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
-                    <TextBlock Text="{Binding SelectedPreset.VerticalRecoil, StringFormat='V: {0}'}" FontSize="10" Foreground="#00FF88" FontWeight="SemiBold"/>
+            <!-- Calibration Pill Badges -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,0">
+                <Border Background="#141B26" CornerRadius="3" Padding="5,1" Margin="0,0,4,0" BorderBrush="#212C3D" BorderThickness="1">
+                    <TextBlock Text="35ms Tap" FontSize="9" FontWeight="SemiBold" Foreground="#00FF88"/>
                 </Border>
-                <Border Background="#161B22" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
-                    <TextBlock Text="{Binding SelectedPreset.HorizontalRecoil, StringFormat='H: {0}'}" FontSize="10" Foreground="#00F0FF" FontWeight="SemiBold"/>
+                <Border Background="#141B26" CornerRadius="3" Padding="5,1" Margin="0,0,4,0" BorderBrush="#212C3D" BorderThickness="1">
+                    <TextBlock Text="-5px Recoil" FontSize="9" FontWeight="SemiBold" Foreground="#00F0FF"/>
                 </Border>
-                <Border Background="#161B22" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
-                    <TextBlock Text="{Binding SelectedPreset.DelayMs, StringFormat='Delay: {0}ms'}" FontSize="10" Foreground="#E6EDF3"/>
-                </Border>
-                <Border Background="#161B22" CornerRadius="3" Padding="4,1">
-                    <TextBlock Text="{Binding SelectedPreset.SmoothStep, StringFormat='Step: {0}'}" FontSize="10" Foreground="#8B949E"/>
+                <Border Background="#141B26" CornerRadius="3" Padding="5,1" Margin="0,0,4,0" BorderBrush="#212C3D" BorderThickness="1">
+                    <TextBlock Text="±1px Jitter" FontSize="9" FontWeight="SemiBold" Foreground="#E6EDF3"/>
                 </Border>
             </StackPanel>
 
             <!-- Footer Hotkeys Guide -->
-            <TextBlock Grid.Row="3" Text="[F6] ON/OFF  |  [F7] Next Weapon  |  [F8] Hide HUD" 
+            <TextBlock Grid.Row="2" Text="[F1] ON/OFF  |  [F2] Toggle HUD  |  [HOLD LMB]"
                        FontSize="9" Foreground="#6E7681" Margin="0,4,0,0"/>
         </Grid>
     </Border>

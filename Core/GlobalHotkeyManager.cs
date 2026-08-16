@@ -9,7 +9,6 @@ namespace PbRecoil.Core
         private volatile bool _isDisposed;
 
         public event Action? OnToggleEngine;
-        public event Action? OnCyclePreset;
         public event Action? OnToggleOverlay;
 
         public void Start()
@@ -27,35 +26,20 @@ namespace PbRecoil.Core
 
         private void HotkeyLoop()
         {
-            bool wasF6Down = false;
-            bool wasF7Down = false;
-            bool wasF8Down = false;
+            bool wasF1 = false;
+            bool wasF2 = false;
 
             while (!_isDisposed)
             {
-                // F6 - Toggle Recoil ON / OFF
-                var isF6Down = Win32Api.IsKeyPressed(Win32Api.VK_F6);
-                if (isF6Down && !wasF6Down)
-                {
-                    OnToggleEngine?.Invoke();
-                }
-                wasF6Down = isF6Down;
+                // F1 — Toggle Engine ON/OFF
+                var isF1 = Win32Api.IsKeyPressed(Win32Api.VK_F1);
+                if (isF1 && !wasF1) OnToggleEngine?.Invoke();
+                wasF1 = isF1;
 
-                // F7 - Cycle Next Weapon Preset
-                var isF7Down = Win32Api.IsKeyPressed(Win32Api.VK_F7);
-                if (isF7Down && !wasF7Down)
-                {
-                    OnCyclePreset?.Invoke();
-                }
-                wasF7Down = isF7Down;
-
-                // F8 - Toggle In-Game HUD Overlay
-                var isF8Down = Win32Api.IsKeyPressed(Win32Api.VK_F8);
-                if (isF8Down && !wasF8Down)
-                {
-                    OnToggleOverlay?.Invoke();
-                }
-                wasF8Down = isF8Down;
+                // F2 — Toggle HUD Overlay on screen
+                var isF2 = Win32Api.IsKeyPressed(Win32Api.VK_F2);
+                if (isF2 && !wasF2) OnToggleOverlay?.Invoke();
+                wasF2 = isF2;
 
                 Thread.Sleep(20);
             }
