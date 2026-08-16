@@ -13,9 +13,14 @@ namespace PbRecoil.Core
         public const int VK_LBUTTON = 0x01;
         public const int VK_RBUTTON = 0x02;
 
-        // ── Function Key Virtual Keys ──────────────────────────────────────────
-        public const int VK_F1 = 0x70;
-        public const int VK_F2 = 0x71;
+        // ── Function & Arrow Key Virtual Keys ─────────────────────────────────
+        public const int VK_LEFT    = 0x25;
+        public const int VK_UP      = 0x26;
+        public const int VK_RIGHT   = 0x27;
+        public const int VK_DOWN    = 0x28;
+        public const int VK_F1      = 0x70;
+        public const int VK_F2      = 0x71;
+        public const int VK_F3      = 0x72;
 
         // ── Mouse Event Flags ──────────────────────────────────────────────────
         public const uint MOUSEEVENTF_MOVE     = 0x0001;

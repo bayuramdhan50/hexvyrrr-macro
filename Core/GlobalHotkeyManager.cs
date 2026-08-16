@@ -10,6 +10,13 @@ namespace PbRecoil.Core
 
         public event Action? OnToggleEngine;
         public event Action? OnToggleOverlay;
+        public event Action? OnToggleSettings;
+        public event Action? OnNavigateUp;
+        public event Action? OnNavigateDown;
+        public event Action? OnValueLeft;
+        public event Action? OnValueRight;
+
+        public volatile bool IsSettingsOpen;
 
         public void Start()
         {
@@ -28,6 +35,11 @@ namespace PbRecoil.Core
         {
             bool wasF1 = false;
             bool wasF2 = false;
+            bool wasF3 = false;
+            bool wasUp = false;
+            bool wasDown = false;
+            bool wasLeft = false;
+            bool wasRight = false;
 
             while (!_isDisposed)
             {
@@ -40,6 +52,35 @@ namespace PbRecoil.Core
                 var isF2 = Win32Api.IsKeyPressed(Win32Api.VK_F2);
                 if (isF2 && !wasF2) OnToggleOverlay?.Invoke();
                 wasF2 = isF2;
+
+                // F3 — Toggle Menu Pengaturan HUD
+                var isF3 = Win32Api.IsKeyPressed(Win32Api.VK_F3);
+                if (isF3 && !wasF3) OnToggleSettings?.Invoke();
+                wasF3 = isF3;
+
+                // Tombol Panah (Arrow Keys) aktif saat menu pengaturan HUD terbuka
+                if (IsSettingsOpen)
+                {
+                    var isUp = Win32Api.IsKeyPressed(Win32Api.VK_UP);
+                    if (isUp && !wasUp) OnNavigateUp?.Invoke();
+                    wasUp = isUp;
+
+                    var isDown = Win32Api.IsKeyPressed(Win32Api.VK_DOWN);
+                    if (isDown && !wasDown) OnNavigateDown?.Invoke();
+                    wasDown = isDown;
+
+                    var isLeft = Win32Api.IsKeyPressed(Win32Api.VK_LEFT);
+                    if (isLeft && !wasLeft) OnValueLeft?.Invoke();
+                    wasLeft = isLeft;
+
+                    var isRight = Win32Api.IsKeyPressed(Win32Api.VK_RIGHT);
+                    if (isRight && !wasRight) OnValueRight?.Invoke();
+                    wasRight = isRight;
+                }
+                else
+                {
+                    wasUp = wasDown = wasLeft = wasRight = false;
+                }
 
                 Thread.Sleep(20);
             }

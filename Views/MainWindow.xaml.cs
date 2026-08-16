@@ -32,6 +32,35 @@ namespace PbRecoil.Views
 
             InitializeSystemTray();
 
+            KeyDown += (s, e) =>
+            {
+                if (e.Key == System.Windows.Input.Key.Up)
+                {
+                    _viewModel.SelectPreviousSetting();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Down)
+                {
+                    _viewModel.SelectNextSetting();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Left)
+                {
+                    _viewModel.DecreaseCurrentSetting();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Right)
+                {
+                    _viewModel.IncreaseCurrentSetting();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.F3)
+                {
+                    _viewModel.ToggleSettingsVisibility();
+                    e.Handled = true;
+                }
+            };
+
             Loaded += (s, e) =>
             {
                 _viewModel.Initialize();
@@ -67,6 +96,12 @@ namespace PbRecoil.Views
                 _viewModel.ToggleOverlay();
             });
             contextMenu.Items.Add(toggleOverlayItem);
+
+            var toggleSettingsItem = new Forms.ToolStripMenuItem("Toggle Menu Pengaturan (F3)", null, (s, e) =>
+            {
+                _viewModel.ToggleSettingsVisibility();
+            });
+            contextMenu.Items.Add(toggleSettingsItem);
 
             contextMenu.Items.Add(new Forms.ToolStripSeparator());
 

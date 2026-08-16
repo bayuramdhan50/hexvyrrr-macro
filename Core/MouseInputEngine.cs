@@ -12,12 +12,12 @@ namespace PbRecoil.Core
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
-        // ── Parameter Hardcode Optimal Point Blank ──────────────────────────────
-        private const int ShotHoldMs         = 1; // Durasi penahanan klik per peluru (ms)
-        private const int ReleaseRecoveryMs  = 1; // Jeda pelepasan klik untuk reset crosshair bloom (ms)
-        private const int VerticalPullPixels = 0;  // Kekuatan tarikan recoil vertikal per shot (px)
-        private const int SmoothSteps        = 2;  // Langkah pembagian tarikan mouse
-        private const int JitterRange        = 1;  // Humanizer jitter acak (±1 px)
+        // ── Parameter Konfigurasi Point Blank (Default Value) ──────────────────
+        public volatile int ShotHoldMs         = 1; // Durasi penahanan klik per peluru (ms) [Default: 1ms]
+        public volatile int ReleaseRecoveryMs  = 1; // Jeda pelepasan klik untuk reset crosshair bloom (ms) [Default: 1ms]
+        public volatile int VerticalPullPixels = 0; // Kekuatan tarikan recoil vertikal per shot (px) [Default: 0px]
+        public volatile int SmoothSteps        = 2; // Langkah pembagian tarikan mouse [Default: 2]
+        public volatile int JitterRange        = 1; // Humanizer jitter acak (±1 px) [Default: 1px]
 
         private readonly Random _random = new();
         private readonly Win32Api.LowLevelMouseProc _hookProc;
@@ -196,23 +196,30 @@ namespace PbRecoil.Core
             PreciseSleep(ShotHoldMs);
 
             // 3. Tarik recoil vertikal ke bawah
-            var subY = (double)VerticalPullPixels / SmoothSteps;
-            var stepDelay = Math.Max(1, 10 / SmoothSteps);
-            double accY = 0;
+            var steps = Math.Max(1, SmoothSteps);
+            var pullPx = Math.Max(0, VerticalPullPixels);
+            var jitter = Math.Max(0, JitterRange);
 
-            for (int i = 0; i < SmoothSteps; i++)
+            if (pullPx > 0 || jitter > 0)
             {
-                if (!_isEnabled || !_isPhysicalLmbDown) break;
+                var subY = (double)pullPx / steps;
+                var stepDelay = Math.Max(1, 10 / steps);
+                double accY = 0;
 
-                accY += subY;
-                var dy = (int)Math.Round(accY);
-                accY -= dy;
+                for (int i = 0; i < steps; i++)
+                {
+                    if (!_isEnabled || !_isPhysicalLmbDown) break;
 
-                var jitterX = _random.Next(-JitterRange, JitterRange + 1);
-                var jitterY = _random.Next(-JitterRange, JitterRange + 1);
+                    accY += subY;
+                    var dy = (int)Math.Round(accY);
+                    accY -= dy;
 
-                Win32Api.SendMouseMove(jitterX, dy + jitterY);
-                PreciseSleep(stepDelay);
+                    var jitterX = jitter > 0 ? _random.Next(-jitter, jitter + 1) : 0;
+                    var jitterY = jitter > 0 ? _random.Next(-jitter, jitter + 1) : 0;
+
+                    Win32Api.SendMouseMove(jitterX, dy + jitterY);
+                    PreciseSleep(stepDelay);
+                }
             }
 
             // 4. Lepas klik tembak (LMB UP) untuk reset crosshair

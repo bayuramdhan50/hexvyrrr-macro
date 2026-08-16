@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:PbRecoil.Views"
         Title="Point Blank Auto-Tap &amp; Anti-Recoil"
-        Width="360" Height="Auto" SizeToContent="Height"
-        MinWidth="320"
+        Width="380" Height="Auto" SizeToContent="Height"
+        MinWidth="340"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -19,7 +19,52 @@
         <converters:StatusBgConverter     x:Key="StatusBgConverter"/>
         <converters:StatusTextConverter   x:Key="StatusTextConverter"/>
         <converters:FiringColorConverter  x:Key="FiringColorConverter"/>
+        <converters:PresetActiveBgConverter x:Key="PresetActiveBgConv"/>
+        <converters:PresetActiveFgConverter x:Key="PresetActiveFgConv"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         <BooleanToVisibilityConverter     x:Key="BoolToVis"/>
+
+        <!-- Preset Button Style -->
+        <Style x:Key="PresetBtnStyle" TargetType="Button">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="0,0,4,4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#263447"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="7,2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Stepper Button Style -->
+        <Style x:Key="StepperBtnStyle" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Background" Value="#161F2E"/>
+            <Setter Property="BorderBrush" Value="#263447"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#00F0FF"/>
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Root Border with Glassmorphism Effect -->
@@ -61,7 +106,7 @@
                         <TextBlock Text="PB AUTO-TAP" FontWeight="Black" FontSize="13"
                                    Foreground="#00F0FF" VerticalAlignment="Center"
                                    FontFamily="Segoe UI"/>
-                        <TextBlock Text=" // HARDCODED" FontSize="10" FontWeight="SemiBold" Foreground="#6E7681"
+                        <TextBlock Text=" // ENGINE" FontSize="10" FontWeight="SemiBold" Foreground="#6E7681"
                                    VerticalAlignment="Center" Margin="6,0,0,0"/>
                     </StackPanel>
 
@@ -94,13 +139,13 @@
             </Border>
 
             <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
-            <StackPanel Margin="20,18,20,20">
+            <StackPanel Margin="18,16,18,18">
                 
                 <!-- Status Badge [ ON / OFF ] -->
                 <Border HorizontalAlignment="Center"
                         CornerRadius="10"
-                        Padding="36,10"
-                        Margin="0,0,0,14"
+                        Padding="36,8"
+                        Margin="0,0,0,12"
                         Background="{Binding IsEngineActive, Converter={StaticResource StatusBgConverter}}"
                         BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
                         BorderThickness="1.5">
@@ -110,18 +155,18 @@
                                           Opacity="0.5"/>
                     </Border.Effect>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="ENGINE " FontSize="22" FontWeight="Bold" Foreground="#8B949E" VerticalAlignment="Center"/>
+                        <TextBlock Text="ENGINE " FontSize="20" FontWeight="Bold" Foreground="#8B949E" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding StatusHeader}"
-                                   FontSize="26" FontWeight="Black"
-                                   Foreground="{Binding IsEngineActive, Converter={StaticResource StatusTextConverter}}"
-                                   VerticalAlignment="Center"
-                                   FontFamily="Segoe UI"/>
+                                    FontSize="24" FontWeight="Black"
+                                    Foreground="{Binding IsEngineActive, Converter={StaticResource StatusTextConverter}}"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe UI"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Live Tapping Status Pulse Indicator -->
                 <Border CornerRadius="6" Background="#121824" BorderBrush="#212936" BorderThickness="1"
-                        Padding="10,6" Margin="0,0,0,14">
+                        Padding="10,6" Margin="0,0,0,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -146,41 +191,154 @@
                     </Grid>
                 </Border>
 
-                <!-- Hardcoded Calibration Specs -->
-                <TextBlock Text="KALIBRASI HARDCODE POINT BLANK" FontSize="9" FontWeight="Bold"
-                           Foreground="#4E5766" Margin="2,0,0,6" FontFamily="Segoe UI"/>
+                <!-- ── SETTINGS COLLAPSIBLE SECTION ─────────────────────── -->
+                <Border Background="#0E1522" CornerRadius="8" Padding="12,10" Margin="0,0,0,12"
+                        BorderBrush="#1F2838" BorderThickness="1">
+                    <StackPanel>
+                        <!-- Settings Header + Hide/Show Toggle Button -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                <WrapPanel Margin="0,0,0,16">
-                    <Border Background="#161F2E" CornerRadius="4" Padding="8,3" Margin="0,0,6,6" BorderBrush="#263447" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Rate: " FontSize="10" Foreground="#8B949E"/>
-                            <TextBlock Text="35ms / 35ms" FontSize="10" FontWeight="Bold" Foreground="#00FF88"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Background="#161F2E" CornerRadius="4" Padding="8,3" Margin="0,0,6,6" BorderBrush="#263447" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Recoil: " FontSize="10" Foreground="#8B949E"/>
-                            <TextBlock Text="-5 px (Smooth)" FontSize="10" FontWeight="Bold" Foreground="#00F0FF"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Background="#161F2E" CornerRadius="4" Padding="8,3" Margin="0,0,6,6" BorderBrush="#263447" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Jitter: " FontSize="10" Foreground="#8B949E"/>
-                            <TextBlock Text="±1 px" FontSize="10" FontWeight="Bold" Foreground="#E6EDF3"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Background="#161F2E" CornerRadius="4" Padding="8,3" Margin="0,0,6,6" BorderBrush="#263447" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Timer: " FontSize="10" Foreground="#8B949E"/>
-                            <TextBlock Text="1ms Period" FontSize="10" FontWeight="Bold" Foreground="#FFA500"/>
-                        </StackPanel>
-                    </Border>
-                </WrapPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="⚙ PENGATURAN PARAMETER" FontSize="10" FontWeight="Bold"
+                                           Foreground="#00F0FF" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Command="{Binding ToggleSettingsCommand}"
+                                    Cursor="Hand" Background="#161F2E" BorderBrush="#263447" BorderThickness="1"
+                                    Padding="8,2">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding IsSettingsVisible, Converter={StaticResource BoolToVis}, FallbackValue='Hide'}" Visibility="Collapsed"/>
+                                                <TextBlock FontSize="9" FontWeight="Bold" Foreground="#00FF88">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="[ BUKA PANEL ]"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSettingsVisible}" Value="True">
+                                                                    <Setter Property="Text" Value="[ TUTUP PANEL ]"/>
+                                                                    <Setter Property="Foreground" Value="#FF7B72"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+
+                        <!-- Setting 1: Shot Hold Delay (ms) -->
+                        <TextBlock Text="DURASI TAHAN KLIK (SHOT HOLD)" FontSize="9" FontWeight="SemiBold" Foreground="#8B949E" Margin="0,2,0,4"/>
+                        <WrapPanel Margin="0,0,0,8">
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="1ms (Default)"
+                                    Command="{Binding SetShotHoldCommand}" CommandParameter="1"
+                                    Background="{Binding ShotHoldMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=1}"
+                                    Foreground="{Binding ShotHoldMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=1}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="5ms"
+                                    Command="{Binding SetShotHoldCommand}" CommandParameter="5"
+                                    Background="{Binding ShotHoldMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=5}"
+                                    Foreground="{Binding ShotHoldMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=5}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="10ms"
+                                    Command="{Binding SetShotHoldCommand}" CommandParameter="10"
+                                    Background="{Binding ShotHoldMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=10}"
+                                    Foreground="{Binding ShotHoldMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=10}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="20ms"
+                                    Command="{Binding SetShotHoldCommand}" CommandParameter="20"
+                                    Background="{Binding ShotHoldMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=20}"
+                                    Foreground="{Binding ShotHoldMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=20}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="50ms"
+                                    Command="{Binding SetShotHoldCommand}" CommandParameter="50"
+                                    Background="{Binding ShotHoldMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=50}"
+                                    Foreground="{Binding ShotHoldMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=50}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="100ms"
+                                    Command="{Binding SetShotHoldCommand}" CommandParameter="100"
+                                    Background="{Binding ShotHoldMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=100}"
+                                    Foreground="{Binding ShotHoldMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=100}"/>
+                        </WrapPanel>
+
+                        <!-- Setting 2: Release Recovery Delay (ms) -->
+                        <TextBlock Text="JEDA RECOVERY PELEPASAN KLIK" FontSize="9" FontWeight="SemiBold" Foreground="#8B949E" Margin="0,2,0,4"/>
+                        <WrapPanel Margin="0,0,0,8">
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="1ms (Default)"
+                                    Command="{Binding SetReleaseRecoveryCommand}" CommandParameter="1"
+                                    Background="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=1}"
+                                    Foreground="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=1}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="5ms"
+                                    Command="{Binding SetReleaseRecoveryCommand}" CommandParameter="5"
+                                    Background="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=5}"
+                                    Foreground="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=5}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="10ms"
+                                    Command="{Binding SetReleaseRecoveryCommand}" CommandParameter="10"
+                                    Background="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=10}"
+                                    Foreground="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=10}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="20ms"
+                                    Command="{Binding SetReleaseRecoveryCommand}" CommandParameter="20"
+                                    Background="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=20}"
+                                    Foreground="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=20}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="50ms"
+                                    Command="{Binding SetReleaseRecoveryCommand}" CommandParameter="50"
+                                    Background="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=50}"
+                                    Foreground="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=50}"/>
+                            <Button Style="{StaticResource PresetBtnStyle}" Content="100ms"
+                                    Command="{Binding SetReleaseRecoveryCommand}" CommandParameter="100"
+                                    Background="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveBgConv}, ConverterParameter=100}"
+                                    Foreground="{Binding ReleaseRecoveryMs, Converter={StaticResource PresetActiveFgConv}, ConverterParameter=100}"/>
+                        </WrapPanel>
+
+                        <!-- Setting 3, 4, 5: Pull, Smooth, Jitter Steppers -->
+                        <Grid Margin="0,2,0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Vertical Pull -->
+                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                <TextBlock Text="Pull Recoil" FontSize="9" FontWeight="SemiBold" Foreground="#8B949E" HorizontalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                    <Button Style="{StaticResource StepperBtnStyle}" Content="-" Command="{Binding ChangePullCommand}" CommandParameter="-1"/>
+                                    <TextBlock Text="{Binding VerticalPullPixels, StringFormat={}{0}px}" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" Width="36" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <Button Style="{StaticResource StepperBtnStyle}" Content="+" Command="{Binding ChangePullCommand}" CommandParameter="1"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Smooth Steps -->
+                            <StackPanel Grid.Column="1" Margin="2,0,2,0">
+                                <TextBlock Text="Smooth Steps" FontSize="9" FontWeight="SemiBold" Foreground="#8B949E" HorizontalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                    <Button Style="{StaticResource StepperBtnStyle}" Content="-" Command="{Binding ChangeSmoothCommand}" CommandParameter="-1"/>
+                                    <TextBlock Text="{Binding SmoothSteps}" FontSize="10" FontWeight="Bold" Foreground="#E6EDF3" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <Button Style="{StaticResource StepperBtnStyle}" Content="+" Command="{Binding ChangeSmoothCommand}" CommandParameter="1"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Jitter Range -->
+                            <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                                <TextBlock Text="Jitter" FontSize="9" FontWeight="SemiBold" Foreground="#8B949E" HorizontalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                    <Button Style="{StaticResource StepperBtnStyle}" Content="-" Command="{Binding ChangeJitterCommand}" CommandParameter="-1"/>
+                                    <TextBlock Text="{Binding JitterRange, StringFormat=±{0}px}" FontSize="10" FontWeight="Bold" Foreground="#FFA500" Width="36" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <Button Style="{StaticResource StepperBtnStyle}" Content="+" Command="{Binding ChangeJitterCommand}" CommandParameter="1"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
                 <!-- Hotkey Instructions Card -->
-                <Border Background="#0C121C" CornerRadius="8" Padding="14,10" BorderBrush="#1F2838" BorderThickness="1">
+                <Border Background="#0C121C" CornerRadius="8" Padding="12,10" BorderBrush="#1F2838" BorderThickness="1">
                     <StackPanel>
-                        <TextBlock Text="PANDUAN KONTROL" FontSize="9" FontWeight="Bold" Foreground="#4E5766" Margin="0,0,0,6"/>
+                        <TextBlock Text="PANDUAN KONTROL &amp; HOTKEY" FontSize="9" FontWeight="Bold" Foreground="#4E5766" Margin="0,0,0,6"/>
 
                         <!-- Hotkey F1 -->
                         <Grid Margin="0,2,0,4">
@@ -206,6 +364,41 @@
                             <TextBlock Grid.Column="1" Text="Tampilkan / Sembunyikan HUD Overlay" FontSize="11" Foreground="#C9D1D9" VerticalAlignment="Center"/>
                         </Grid>
 
+                        <!-- Hotkey F3 -->
+                        <Grid Margin="0,2,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#1A2332" CornerRadius="4" Padding="6,1" HorizontalAlignment="Left">
+                                <TextBlock Text="[ F3 ]" FontSize="10" FontWeight="Bold" Foreground="#FFA500" FontFamily="Consolas"/>
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="Buka / Tutup Menu Pengaturan di HUD" FontSize="11" Foreground="#C9D1D9" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Arrow Keys -->
+                        <Grid Margin="0,2,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#1A2332" CornerRadius="4" Padding="6,1" HorizontalAlignment="Left">
+                                <TextBlock Text="[ ▲ / ▼ ]" FontSize="10" FontWeight="Bold" Foreground="#00FF88" FontFamily="Consolas"/>
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="Pilih Item Pengaturan di HUD" FontSize="11" Foreground="#C9D1D9" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Grid Margin="0,2,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="#1A2332" CornerRadius="4" Padding="6,1" HorizontalAlignment="Left">
+                                <TextBlock Text="[ ◄ / ► ]" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" FontFamily="Consolas"/>
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="Ubah Nilai Parameter di HUD" FontSize="11" Foreground="#C9D1D9" VerticalAlignment="Center"/>
+                        </Grid>
+
                         <!-- Hold Action -->
                         <Grid Margin="0,2,0,0">
                             <Grid.ColumnDefinitions>
@@ -215,7 +408,7 @@
                             <Border Background="#1A2332" CornerRadius="4" Padding="6,1" HorizontalAlignment="Left">
                                 <TextBlock Text="[ HOLD ]" FontSize="10" FontWeight="Bold" Foreground="#FF5500" FontFamily="Consolas"/>
                             </Border>
-                            <TextBlock Grid.Column="1" Text="Tahan Klik Kiri (LMB) -> Auto-Tap + Recoil" FontSize="11" Foreground="#E6EDF3" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Tahan LMB -> Auto-Tap + Recoil" FontSize="11" Foreground="#E6EDF3" VerticalAlignment="Center"/>
                         </Grid>
                     </StackPanel>
                 </Border>

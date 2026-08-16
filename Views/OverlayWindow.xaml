@@ -8,7 +8,8 @@
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        Width="260" Height="96"
+        Width="300"
+        SizeToContent="Height"
         Left="24" Top="24"
         IsHitTestVisible="False">
 
@@ -17,72 +18,233 @@
         <converters:StatusBgConverter     x:Key="StatusBgConverter"/>
         <converters:StatusTextConverter   x:Key="StatusTextConverter"/>
         <converters:FiringColorConverter  x:Key="FiringColorConverter"/>
+        <converters:SelectedSettingBorderBrushConverter x:Key="SelectedBorderConv"/>
+        <converters:SelectedSettingBgBrushConverter     x:Key="SelectedBgConv"/>
+        <converters:SelectedSettingForegroundConverter  x:Key="SelectedFgConv"/>
+        <converters:SelectedSettingIndicatorVisibilityConverter x:Key="SelectedIndicatorConv"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
 
     <Border CornerRadius="10"
-            Background="#E60A0E17"
+            Background="#EE0A0E17"
             BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
             BorderThickness="1.5"
             Padding="12,10"
             Margin="4">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#000000" Opacity="0.9"/>
+            <DropShadowEffect BlurRadius="16" ShadowDepth="0" Color="#000000" Opacity="0.95"/>
         </Border.Effect>
 
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <StackPanel>
+            <!-- ── MODE RINGKAS (Ketika Menu Settings Tertutup) ────────────── -->
+            <StackPanel Visibility="{Binding IsSettingsVisible, Converter={StaticResource InverseBoolToVis}}">
+                <!-- Header Row -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-            <!-- Header Row -->
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8" Margin="0,0,6,0"
+                                 Fill="{Binding IsFiring, Converter={StaticResource FiringColorConverter}}">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0"
+                                                  Color="{Binding IsFiring, Converter={StaticResource FiringColorConverter}}"
+                                                  Opacity="0.9"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                        <TextBlock Text="PB AUTO-TAP" FontWeight="ExtraBold" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text=" // HUD" Foreground="#6E7681" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="8" Height="8" Margin="0,0,6,0"
-                             Fill="{Binding IsFiring, Converter={StaticResource FiringColorConverter}}">
-                        <Ellipse.Effect>
-                            <DropShadowEffect BlurRadius="6" ShadowDepth="0"
-                                              Color="{Binding IsFiring, Converter={StaticResource FiringColorConverter}}"
-                                              Opacity="0.9"/>
-                        </Ellipse.Effect>
-                    </Ellipse>
-                    <TextBlock Text="PB AUTO-TAP" FontWeight="ExtraBold" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Text=" // HUD" Foreground="#6E7681" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <!-- Status Badge -->
+                    <Border Grid.Column="1" CornerRadius="4" Padding="8,2"
+                            Background="{Binding IsEngineActive, Converter={StaticResource StatusBgConverter}}"
+                            BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
+                            BorderThickness="1">
+                        <TextBlock Text="{Binding StatusHeader}" 
+                                   FontWeight="Black" FontSize="10"
+                                   Foreground="{Binding IsEngineActive, Converter={StaticResource StatusTextConverter}}"/>
+                    </Border>
+                </Grid>
 
-                <!-- Status Badge -->
-                <Border Grid.Column="1" CornerRadius="4" Padding="8,2"
-                        Background="{Binding IsEngineActive, Converter={StaticResource StatusBgConverter}}"
-                        BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
-                        BorderThickness="1">
-                    <TextBlock Text="{Binding StatusHeader}" 
-                               FontWeight="Black" FontSize="10"
-                               Foreground="{Binding IsEngineActive, Converter={StaticResource StatusTextConverter}}"/>
-                </Border>
-            </Grid>
+                <!-- Calibration Pill Badges Summary -->
+                <WrapPanel Margin="0,6,0,4">
+                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Hold: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding ShotHoldMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Recov: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding ReleaseRecoveryMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Pull: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding VerticalPullPixels, StringFormat={}{0}px}" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Smooth: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding SmoothSteps}" FontSize="9" FontWeight="Bold" Foreground="#E6EDF3"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Jitter: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding JitterRange, StringFormat=±{0}px}" FontSize="9" FontWeight="Bold" Foreground="#FFA500"/>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
 
-            <!-- Calibration Pill Badges -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,0">
-                <Border Background="#141B26" CornerRadius="3" Padding="5,1" Margin="0,0,4,0" BorderBrush="#212C3D" BorderThickness="1">
-                    <TextBlock Text="35ms Tap" FontSize="9" FontWeight="SemiBold" Foreground="#00FF88"/>
-                </Border>
-                <Border Background="#141B26" CornerRadius="3" Padding="5,1" Margin="0,0,4,0" BorderBrush="#212C3D" BorderThickness="1">
-                    <TextBlock Text="-5px Recoil" FontSize="9" FontWeight="SemiBold" Foreground="#00F0FF"/>
-                </Border>
-                <Border Background="#141B26" CornerRadius="3" Padding="5,1" Margin="0,0,4,0" BorderBrush="#212C3D" BorderThickness="1">
-                    <TextBlock Text="±1px Jitter" FontSize="9" FontWeight="SemiBold" Foreground="#E6EDF3"/>
-                </Border>
+                <!-- Footer Hotkeys Guide -->
+                <TextBlock Text="[F1] ON/OFF  |  [F2] HUD  |  [F3] MENU"
+                           FontSize="9" Foreground="#6E7681" Margin="0,2,0,0"/>
             </StackPanel>
 
-            <!-- Footer Hotkeys Guide -->
-            <TextBlock Grid.Row="2" Text="[F1] ON/OFF  |  [F2] Toggle HUD  |  [HOLD LMB]"
-                       FontSize="9" Foreground="#6E7681" Margin="0,4,0,0"/>
-        </Grid>
+            <!-- ── MODE MENU PENGATURAN INTERAKTIF (Ketika F3 Ditekan) ───── -->
+            <StackPanel Visibility="{Binding IsSettingsVisible, Converter={StaticResource BoolToVis}}">
+                <!-- Header Row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="⚙ CONFIG MENU" FontWeight="Black" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text=" // LIVE" Foreground="#00FF88" FontSize="10" FontWeight="Bold" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Close Hint Badge -->
+                    <Border Grid.Column="1" CornerRadius="3" Padding="5,1" Background="#161F2E" BorderBrush="#263447" BorderThickness="1">
+                        <TextBlock Text="[F3] TUTUP" FontSize="9" FontWeight="Bold" Foreground="#8B949E"/>
+                    </Border>
+                </Grid>
+
+                <!-- Menu Item 0: Shot Hold Duration -->
+                <Border CornerRadius="5" Padding="8,4" Margin="0,0,0,3" BorderThickness="1"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=0}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=0}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="10" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=0}"/>
+                        <TextBlock Grid.Column="1" Text="Shot Hold Time" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding ShotHoldMs, StringFormat=◄  {0} ms  ►}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Item 1: Release Recovery Delay -->
+                <Border CornerRadius="5" Padding="8,4" Margin="0,0,0,3" BorderThickness="1"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=1}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=1}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="10" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=1}"/>
+                        <TextBlock Grid.Column="1" Text="Release Recovery" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding ReleaseRecoveryMs, StringFormat=◄  {0} ms  ►}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Item 2: Vertical Recoil Pull -->
+                <Border CornerRadius="5" Padding="8,4" Margin="0,0,0,3" BorderThickness="1"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=2}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=2}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="10" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=2}"/>
+                        <TextBlock Grid.Column="1" Text="Vertical Recoil Pull" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding VerticalPullPixels, StringFormat=◄  {0} px  ►}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Item 3: Smooth Division Steps -->
+                <Border CornerRadius="5" Padding="8,4" Margin="0,0,0,3" BorderThickness="1"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=3}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=3}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="10" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=3}"/>
+                        <TextBlock Grid.Column="1" Text="Smooth Steps" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding SmoothSteps, StringFormat=◄  {0} steps  ►}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Item 4: Humanizer Jitter -->
+                <Border CornerRadius="5" Padding="8,4" Margin="0,0,0,6" BorderThickness="1"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=4}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=4}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="10" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=4}"/>
+                        <TextBlock Grid.Column="1" Text="Humanizer Jitter" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding JitterRange, StringFormat=◄  ±{0} px  ►}" FontSize="10" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Navigation Controls Instruction -->
+                <Border Background="#0C121C" CornerRadius="4" Padding="6,3" BorderBrush="#1F2838" BorderThickness="1">
+                    <TextBlock Text="[▲/▼] PILIH ITEM    [◄/►] UBAH NILAI"
+                               FontSize="9" FontWeight="SemiBold" Foreground="#00FF88" HorizontalAlignment="Center"/>
+                </Border>
+            </StackPanel>
+        </StackPanel>
     </Border>
 </Window>
