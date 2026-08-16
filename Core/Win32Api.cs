@@ -6,6 +6,9 @@ namespace PbRecoil.Core
 {
     public static class Win32Api
     {
+        // ── Custom Magic Signature untuk menandai injected clicks ─────────────
+        public static readonly UIntPtr INJECTED_SIGNATURE = (UIntPtr)0x50425243; // "PBRC"
+
         // ── Mouse Button Virtual Keys ──────────────────────────────────────────
         public const int VK_LBUTTON = 0x01;
         public const int VK_RBUTTON = 0x02;
@@ -23,9 +26,6 @@ namespace PbRecoil.Core
         public const int WH_MOUSE_LL    = 14;
         public const int WM_LBUTTONDOWN = 0x0201;
         public const int WM_LBUTTONUP   = 0x0202;
-
-        // ── Input Type Constants ───────────────────────────────────────────────
-        public const uint INPUT_MOUSE = 0;
 
         // ── Window Style Constants (Click-Through Overlay) ─────────────────────
         public const int GWL_EXSTYLE       = -20;
@@ -77,9 +77,6 @@ namespace PbRecoil.Core
         [DllImport("kernel32.dll")]
         public static extern bool Beep(uint dwFreq, uint dwDuration);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
-
         // ── Structs ─────────────────────────────────────────────────────────────
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
@@ -98,64 +95,21 @@ namespace PbRecoil.Core
             public UIntPtr dwExtraInfo;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MOUSEINPUT
-        {
-            public int     dx;
-            public int     dy;
-            public uint    mouseData;
-            public uint    dwFlags;
-            public uint    time;
-            public UIntPtr dwExtraInfo;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct KEYBDINPUT
-        {
-            public ushort  wVk;
-            public ushort  wScan;
-            public uint    dwFlags;
-            public uint    time;
-            public UIntPtr dwExtraInfo;
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        public struct INPUT
-        {
-            [FieldOffset(0)] public uint       type;
-            [FieldOffset(4)] public MOUSEINPUT mi;
-            [FieldOffset(4)] public KEYBDINPUT ki;
-        }
-
         // ── Mouse Simulation Helpers ────────────────────────────────────────────
 
         public static void SendMouseMove(int dx, int dy)
         {
-            var inputs = new INPUT[1];
-            inputs[0].type       = INPUT_MOUSE;
-            inputs[0].mi.dx      = dx;
-            inputs[0].mi.dy      = dy;
-            inputs[0].mi.dwFlags = MOUSEEVENTF_MOVE;
-
-            SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+            mouse_event(MOUSEEVENTF_MOVE, dx, dy, 0, INJECTED_SIGNATURE);
         }
 
         public static void SendMouseDown()
         {
-            var inputs = new INPUT[1];
-            inputs[0].type       = INPUT_MOUSE;
-            inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-
-            SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, INJECTED_SIGNATURE);
         }
 
         public static void SendMouseUp()
         {
-            var inputs = new INPUT[1];
-            inputs[0].type       = INPUT_MOUSE;
-            inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-
-            SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, INJECTED_SIGNATURE);
         }
 
         public static bool IsKeyPressed(int vKey)

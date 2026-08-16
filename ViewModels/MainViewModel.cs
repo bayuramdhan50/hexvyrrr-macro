@@ -9,10 +9,10 @@ namespace PbRecoil.ViewModels
         private readonly MouseInputEngine _engine;
         private readonly GlobalHotkeyManager _hotkeyManager;
 
-        private bool _isEngineActive;
+        private bool _isEngineActive = true; // Default langsung ON saat aplikasi dibuka
         private bool _isOverlayActive = true;
         private bool _isFiring;
-        private string _statusMessage = "Siap. Tekan [F1] untuk aktifkan Auto-Tap & Anti-Recoil.";
+        private string _statusMessage = "AUTO-TAP & RECOIL AKTIF — Tahan LMB untuk menembak.";
 
         public bool IsEngineActive
         {

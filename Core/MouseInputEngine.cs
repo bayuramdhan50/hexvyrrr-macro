@@ -8,7 +8,7 @@ namespace PbRecoil.Core
 {
     /// <summary>
     /// Engine Auto-Tap & Anti-Recoil Point Blank dengan algoritma hardcoded berkecepatan tinggi.
-    /// Menggunakan WH_MOUSE_LL Hook agar pendeteksian tombol fisik mouse (HOLD) tidak terganggu oleh SendInput.
+    /// Menggunakan WH_MOUSE_LL Hook dengan pencegahan intervensi spray DirectInput agar tembakan konsisten melakukan tap-tap.
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
@@ -25,7 +25,7 @@ namespace PbRecoil.Core
 
         private Thread? _workerThread;
         private volatile bool _isDisposed;
-        private volatile bool _isEnabled;
+        private volatile bool _isEnabled = true; // Default ON saat aplikasi dijalankan
         private volatile bool _isPhysicalLmbDown;
         private volatile bool _isFiring;
 
@@ -37,6 +37,12 @@ namespace PbRecoil.Core
                 if (_isEnabled != value)
                 {
                     _isEnabled = value;
+                    if (!_isEnabled)
+                    {
+                        _isPhysicalLmbDown = false;
+                        _isFiring = false;
+                        Win32Api.SendMouseUp();
+                    }
                     OnStateChanged?.Invoke(_isEnabled);
                     PlayStatusBeep(_isEnabled);
                 }
@@ -90,20 +96,30 @@ namespace PbRecoil.Core
             if (nCode >= 0)
             {
                 var hookStruct = Marshal.PtrToStructure<Win32Api.MSLLHOOKSTRUCT>(lParam);
-                // Bit 0 pada flags menandakan input hasil injeksi (SendInput/mouse_event)
-                bool isInjected = (hookStruct.flags & 1) != 0;
+                bool isInjected = (hookStruct.flags & 1) != 0 || hookStruct.dwExtraInfo == Win32Api.INJECTED_SIGNATURE;
 
-                // Hanya proses klik hardware fisik dari pengguna (bukan injeksi engine)
+                // Hanya proses interaksi hardware fisik asli dari pengguna
                 if (!isInjected)
                 {
                     var msg = wParam.ToInt32();
                     if (msg == Win32Api.WM_LBUTTONDOWN)
                     {
                         _isPhysicalLmbDown = true;
+
+                        // Tahan sinyal spray mentah saat Engine ON agar game hanya memproses tembakan tap teratur
+                        if (_isEnabled)
+                        {
+                            return (IntPtr)1;
+                        }
                     }
                     else if (msg == Win32Api.WM_LBUTTONUP)
                     {
                         _isPhysicalLmbDown = false;
+
+                        if (_isEnabled)
+                        {
+                            return (IntPtr)1;
+                        }
                     }
                 }
             }
@@ -131,7 +147,7 @@ namespace PbRecoil.Core
                         continue;
                     }
 
-                    // Selama tombol Mouse Kiri fisik di-HOLD oleh pengguna dan Engine aktif
+                    // Tahan (HOLD) LMB fisik -> jalankan looping Auto-Tap
                     if (_isPhysicalLmbDown)
                     {
                         if (!_isFiring)
@@ -140,7 +156,6 @@ namespace PbRecoil.Core
                             OnFiringStateChanged?.Invoke(true);
                         }
 
-                        // Siklus Auto-Tap + Recoil Pull berulang (Continuous Looping)
                         ExecuteTapCycle();
                     }
                     else
@@ -167,13 +182,13 @@ namespace PbRecoil.Core
         /// Mengeksekusi 1 siklus tembakan tap:
         /// 1. Trigger Klik Kiri (LMB Down)
         /// 2. Tahan ~35ms untuk pelepasan peluru
-        /// 3. Tarik recoil ke bawah dengan smoothing + jitter
+        /// 3. Tarik recoil vertikal ke bawah dengan smoothing + jitter
         /// 4. Lepas Klik Kiri (LMB Up)
         /// 5. Jeda pemulihan ~35ms agar spread bloom reset
         /// </summary>
         private void ExecuteTapCycle()
         {
-            // 1. Simulasikan klik tembak
+            // 1. Simulasikan klik tembak (LMB DOWN)
             Win32Api.SendMouseDown();
             OnRecoilTick?.Invoke();
 
@@ -200,10 +215,10 @@ namespace PbRecoil.Core
                 PreciseSleep(stepDelay);
             }
 
-            // 4. Lepas klik tembak untuk reset spread & crosshair
+            // 4. Lepas klik tembak (LMB UP) untuk reset crosshair
             Win32Api.SendMouseUp();
 
-            // 5. Jeda recovery sebelum tap berikutnya dimulai
+            // 5. Jeda pemulihan sebelum tap berikutnya dimulai
             PreciseSleep(ReleaseRecoveryMs);
         }
 
