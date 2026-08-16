@@ -1,0 +1,84 @@
+<Window x:Class="PbRecoil.Views.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:PbRecoil.Views"
+        Title="PB Recoil HUD Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Width="320" Height="140"
+        Left="20" Top="20"
+        IsHitTestVisible="False">
+    <Window.Resources>
+        <converters:StatusBorderConverter x:Key="StatusBorderConverter"/>
+        <converters:StatusBgConverter x:Key="StatusBgConverter"/>
+        <converters:StatusTextConverter x:Key="StatusTextConverter"/>
+    </Window.Resources>
+    <Border CornerRadius="8"
+            Background="#E60D1117"
+            BorderBrush="{Binding IsEngineActive, Converter={StaticResource StatusBorderConverter}}"
+            BorderThickness="1.5"
+            Padding="12"
+            Margin="6">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#000000" Opacity="0.8"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header HUD -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="PB RECOIL" FontWeight="Bold" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text=" // HUD" Foreground="#8B949E" FontSize="11" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Status Badge -->
+                <Border Grid.Column="1" CornerRadius="4" Padding="6,2"
+                        Background="{Binding IsEngineActive, Converter={StaticResource StatusBgConverter}}">
+                    <TextBlock Text="{Binding StatusHeader}" 
+                               FontWeight="Bold" FontSize="10"
+                               Foreground="{Binding IsEngineActive, Converter={StaticResource StatusTextConverter}}"/>
+                </Border>
+            </Grid>
+
+            <!-- Active Weapon Name -->
+            <TextBlock Grid.Row="1" 
+                       Text="{Binding SelectedPreset.Name, TargetNullValue='No Weapon Selected'}"
+                       FontWeight="ExtraBold" FontSize="16" Foreground="#F0F6FC"
+                       Margin="0,4,0,2" TextTrimming="CharacterEllipsis"/>
+
+            <!-- Parameters Preview -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
+                <Border Background="#161B22" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
+                    <TextBlock Text="{Binding SelectedPreset.VerticalRecoil, StringFormat='V: {0}'}" FontSize="10" Foreground="#00FF88" FontWeight="SemiBold"/>
+                </Border>
+                <Border Background="#161B22" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
+                    <TextBlock Text="{Binding SelectedPreset.HorizontalRecoil, StringFormat='H: {0}'}" FontSize="10" Foreground="#00F0FF" FontWeight="SemiBold"/>
+                </Border>
+                <Border Background="#161B22" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
+                    <TextBlock Text="{Binding SelectedPreset.DelayMs, StringFormat='Delay: {0}ms'}" FontSize="10" Foreground="#E6EDF3"/>
+                </Border>
+                <Border Background="#161B22" CornerRadius="3" Padding="4,1">
+                    <TextBlock Text="{Binding SelectedPreset.SmoothStep, StringFormat='Step: {0}'}" FontSize="10" Foreground="#8B949E"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Footer Hotkeys Guide -->
+            <TextBlock Grid.Row="3" Text="[F6] ON/OFF  |  [F7] Next Weapon  |  [F8] Hide HUD" 
+                       FontSize="9" Foreground="#6E7681" Margin="0,4,0,0"/>
+        </Grid>
+    </Border>
+</Window>
