@@ -13,9 +13,9 @@ namespace PbRecoil.Core
 {
     public class UpdateService
     {
-        // Ganti dengan repository publik Anda jika di-hosting di GitHub
-        private const string DefaultRepoOwner = "hexvyrr";
-        private const string DefaultRepoName = "pb-recoil";
+        // Ganti dengan repository publik Anda di GitHub
+        private const string DefaultRepoOwner = "bayuramdhan50";
+        private const string DefaultRepoName = "hexvyrr-macro";
 
         private static readonly HttpClient _httpClient = new HttpClient();
 
