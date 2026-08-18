@@ -7,27 +7,29 @@ using System.Threading.Tasks;
 namespace PbRecoil.Core
 {
     /// <summary>
-    /// Engine Auto-Tap & Anti-Recoil Point Blank dengan algoritma hardcoded berkecepatan tinggi.
-    /// Menggunakan WH_MOUSE_LL Hook dengan pencegahan intervensi spray DirectInput agar tembakan konsisten melakukan tap-tap.
+    /// Engine Auto-Tap Smart G-Hub Style untuk Point Blank.
+    /// Mengimplementasikan adaptive dynamic tapping curve dengan kalibrasi halus (tidak terlalu menarik ke bawah).
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
-        // ── Parameter Konfigurasi Point Blank (Default Value) ──────────────────
-        public volatile int ShotHoldMs         = 1; // Durasi penahanan klik per peluru (ms) [Default: 1ms]
-        public volatile int ReleaseRecoveryMs  = 1; // Jeda pelepasan klik untuk reset crosshair bloom (ms) [Default: 1ms]
-        public volatile int VerticalPullPixels = 0; // Kekuatan tarikan recoil vertikal per shot (px) [Default: 0px]
-        public volatile int SmoothSteps        = 2; // Langkah pembagian tarikan mouse [Default: 2]
-        public volatile int JitterRange        = 1; // Humanizer jitter acak (±1 px) [Default: 1px]
+        // ── Parameter Konfigurasi (Tersinkron dengan F3 Menu) ──────────────────
+        public volatile int VerticalPullPixels = 1;  // Kekuatan tarikan recoil dasar (px) [Default: 1px - halus]
+        public volatile int ShotHoldMs         = 15; // Waktu tahan klik per tap (ms) [Default: 15ms]
+        public volatile int ReleaseRecoveryMs  = 8;  // Jeda pemulihan antar tap (ms) [Default: 8ms]
+        public volatile int InitialKickBonus   = 1;  // Kompensasi kick peluru 1-3 (px) [Default: +1px]
+        public volatile int SmoothSteps        = 2;  // Langkah pembagian tarikan mouse [Default: 2]
+        public volatile int JitterRange        = 1;  // Humanizer jitter acak (±1 px) [Default: 1px]
 
-        private readonly Random _random = new();
+        private static readonly Random _random = new();
         private readonly Win32Api.LowLevelMouseProc _hookProc;
         private IntPtr _hookHandle = IntPtr.Zero;
 
         private Thread? _workerThread;
         private volatile bool _isDisposed;
-        private volatile bool _isEnabled = true; // Default ON saat aplikasi dijalankan
+        private volatile bool _isEnabled = true;
         private volatile bool _isPhysicalLmbDown;
         private volatile bool _isFiring;
+        private int _shotCount;
 
         public bool IsEnabled
         {
@@ -41,6 +43,7 @@ namespace PbRecoil.Core
                     {
                         _isPhysicalLmbDown = false;
                         _isFiring = false;
+                        _shotCount = 0;
                         Win32Api.SendMouseUp();
                     }
                     OnStateChanged?.Invoke(_isEnabled);
@@ -69,7 +72,7 @@ namespace PbRecoil.Core
             _isDisposed = false;
             _workerThread = new Thread(WorkerLoop)
             {
-                Name = "PbRecoil_EngineThread",
+                Name = "Hexvyrr_SmartEngineThread",
                 IsBackground = true,
                 Priority = ThreadPriority.Highest
             };
@@ -98,7 +101,6 @@ namespace PbRecoil.Core
                 var hookStruct = Marshal.PtrToStructure<Win32Api.MSLLHOOKSTRUCT>(lParam);
                 bool isInjected = (hookStruct.flags & 1) != 0 || hookStruct.dwExtraInfo == Win32Api.INJECTED_SIGNATURE;
 
-                // Hanya proses interaksi hardware fisik asli dari pengguna
                 if (!isInjected)
                 {
                     var msg = wParam.ToInt32();
@@ -106,15 +108,15 @@ namespace PbRecoil.Core
                     {
                         _isPhysicalLmbDown = true;
 
-                        // Tahan sinyal spray mentah saat Engine ON agar game hanya memproses tembakan tap teratur
                         if (_isEnabled)
                         {
-                            return (IntPtr)1;
+                            return (IntPtr)1; // Tahan sinyal fisik, jalankan smart tapping loop
                         }
                     }
                     else if (msg == Win32Api.WM_LBUTTONUP)
                     {
                         _isPhysicalLmbDown = false;
+                        _shotCount = 0; // Reset kurva tembakan saat tombol dilepas
 
                         if (_isEnabled)
                         {
@@ -140,6 +142,7 @@ namespace PbRecoil.Core
                         if (_isFiring)
                         {
                             _isFiring = false;
+                            _shotCount = 0;
                             OnFiringStateChanged?.Invoke(false);
                             Win32Api.SendMouseUp();
                         }
@@ -147,22 +150,24 @@ namespace PbRecoil.Core
                         continue;
                     }
 
-                    // Tahan (HOLD) LMB fisik -> jalankan looping Auto-Tap
+                    // Tahan (HOLD) LMB fisik -> jalankan G-Hub Style Smart Dynamic Tapping
                     if (_isPhysicalLmbDown)
                     {
                         if (!_isFiring)
                         {
                             _isFiring = true;
+                            _shotCount = 0;
                             OnFiringStateChanged?.Invoke(true);
                         }
 
-                        ExecuteTapCycle();
+                        ExecuteSmartTapCycle();
                     }
                     else
                     {
                         if (_isFiring)
                         {
                             _isFiring = false;
+                            _shotCount = 0;
                             OnFiringStateChanged?.Invoke(false);
                             Win32Api.SendMouseUp();
                         }
@@ -179,56 +184,84 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mengeksekusi 1 siklus tembakan tap:
-        /// 1. Trigger Klik Kiri (LMB Down)
-        /// 2. Tahan ~35ms untuk pelepasan peluru
-        /// 3. Tarik recoil vertikal ke bawah dengan smoothing + jitter
-        /// 4. Lepas Klik Kiri (LMB Up)
-        /// 5. Jeda pemulihan ~35ms agar spread bloom reset
+        /// Mengeksekusi siklus Smart Tap dengan Dynamic 10-Shot Recoil Curve:
+        /// - Shot 1–3: Initial Kick Phase (Hold sedikit lebih lama, tarikan kompensasi first-shot kick)
+        /// - Shot 4–10: Ramp-up Stabilization Phase (Gradual stabilization)
+        /// - Shot 11+: Steady-State Laser Mode (Ritme konstan rapat, tembakan lurus)
         /// </summary>
-        private void ExecuteTapCycle()
+        private void ExecuteSmartTapCycle()
         {
-            // 1. Simulasikan klik tembak (LMB DOWN)
+            _shotCount++;
+
+            int holdMs;
+            int pullPixels;
+            int recoveryMs;
+            int steps = Math.Max(1, SmoothSteps);
+            int jitter = Math.Max(0, JitterRange);
+
+            if (_shotCount <= 3)
+            {
+                // ── FASE 1: PELURU 1–3 (Initial Kick) ──
+                holdMs     = Math.Max(1, ShotHoldMs + 4);
+                pullPixels = Math.Max(0, VerticalPullPixels + InitialKickBonus);
+                recoveryMs = Math.Max(1, ReleaseRecoveryMs + 2);
+            }
+            else if (_shotCount <= 10)
+            {
+                // ── FASE 2: PELURU 4–10 (Ramp-up Stabilization) ──
+                int extraHold = Math.Max(0, 2 - (_shotCount - 3) / 2);
+                holdMs     = Math.Max(1, ShotHoldMs + extraHold);
+                pullPixels = Math.Max(0, VerticalPullPixels);
+                recoveryMs = Math.Max(1, ReleaseRecoveryMs);
+            }
+            else
+            {
+                // ── FASE 3: PELURU 11+ (Steady-State Laser Mode) ──
+                holdMs     = Math.Max(1, ShotHoldMs);
+                pullPixels = Math.Max(0, VerticalPullPixels);
+                recoveryMs = Math.Max(1, ReleaseRecoveryMs - 1);
+            }
+
+            // 1. Simulasikan Klik Kiri (LMB Down)
             Win32Api.SendMouseDown();
             OnRecoilTick?.Invoke();
 
-            // 2. Durasi peluru melesat keluar
-            PreciseSleep(ShotHoldMs);
+            // 2. Durasi penahanan peluru (Hold)
+            PreciseSleep(holdMs);
 
-            // 3. Tarik recoil vertikal ke bawah
-            var steps = Math.Max(1, SmoothSteps);
-            var pullPx = Math.Max(0, VerticalPullPixels);
-            var jitter = Math.Max(0, JitterRange);
-
-            if (pullPx > 0 || jitter > 0)
+            // 3. Tarik recoil vertikal secara halus saat LMB masih aktif
+            if (pullPixels > 0 || jitter > 0)
             {
-                var subY = (double)pullPx / steps;
-                var stepDelay = Math.Max(1, 10 / steps);
+                double subY = (double)pullPixels / steps;
                 double accY = 0;
+                int stepDelay = Math.Max(1, 8 / steps);
 
                 for (int i = 0; i < steps; i++)
                 {
                     if (!_isEnabled || !_isPhysicalLmbDown) break;
 
                     accY += subY;
-                    var dy = (int)Math.Round(accY);
+                    int dy = (int)Math.Round(accY);
                     accY -= dy;
 
-                    var jitterX = jitter > 0 ? _random.Next(-jitter, jitter + 1) : 0;
-                    var jitterY = jitter > 0 ? _random.Next(-jitter, jitter + 1) : 0;
+                    int jitterX = jitter > 0 ? _random.Next(-jitter, jitter + 1) : 0;
+                    int jitterY = jitter > 0 ? _random.Next(-jitter, jitter + 1) : 0;
 
                     Win32Api.SendMouseMove(jitterX, dy + jitterY);
                     PreciseSleep(stepDelay);
                 }
             }
 
-            // 4. Lepas klik tembak (LMB UP) untuk reset crosshair
+            // 4. Lepas Klik Kiri (LMB Up) untuk reset bloom crosshair
             Win32Api.SendMouseUp();
 
-            // 5. Jeda pemulihan sebelum tap berikutnya dimulai
-            PreciseSleep(ReleaseRecoveryMs);
+            // 5. Jeda pemulihan (Recovery) sebelum tap berikutnya
+            PreciseSleep(recoveryMs);
         }
 
+        /// <summary>
+        /// Delay ultra-presisi berbasis Stopwatch yang tidak terpengaruh kuantisasi OS thread scheduler.
+        /// </summary>
         private void PreciseSleep(int ms)
         {
             if (ms <= 0) return;
@@ -274,6 +307,7 @@ namespace PbRecoil.Core
             _isDisposed = true;
             _isEnabled  = false;
             _isPhysicalLmbDown = false;
+            _shotCount = 0;
 
             if (_hookHandle != IntPtr.Zero)
             {

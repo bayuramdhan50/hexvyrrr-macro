@@ -21,6 +21,7 @@ namespace PbRecoil.Core
         public const int VK_F1      = 0x70;
         public const int VK_F2      = 0x71;
         public const int VK_F3      = 0x72;
+        public const int VK_F4      = 0x73;
 
         // ── Mouse Event Flags ──────────────────────────────────────────────────
         public const uint MOUSEEVENTF_MOVE     = 0x0001;
@@ -37,6 +38,7 @@ namespace PbRecoil.Core
         public const int WS_EX_TRANSPARENT = 0x00000020;
         public const int WS_EX_LAYERED     = 0x00080000;
         public const int WS_EX_TOOLWINDOW  = 0x00000080;
+        public const int WS_EX_NOACTIVATE  = 0x08000000;
 
         // ── Delegates ───────────────────────────────────────────────────────────
         public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -91,6 +93,18 @@ namespace PbRecoil.Core
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+
+            public int Width => right - left;
+            public int Height => bottom - top;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct MSLLHOOKSTRUCT
         {
             public POINT   pt;
@@ -99,6 +113,25 @@ namespace PbRecoil.Core
             public uint    time;
             public UIntPtr dwExtraInfo;
         }
+
+        // ── Extended User32 P/Invokes for Window & Display Tracking ────────────
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        public static extern int GetSystemMetrics(int nIndex);
+
+        public const int SM_CXSCREEN = 0;
+        public const int SM_CYSCREEN = 1;
 
         // ── Mouse Simulation Helpers ────────────────────────────────────────────
 
@@ -129,6 +162,122 @@ namespace PbRecoil.Core
 
             var sb = new StringBuilder(256);
             return GetWindowText(handle, sb, 256) > 0 ? sb.ToString() : string.Empty;
+        }
+
+        // ── Window Positioning & Z-Order (Topmost Enforcement) ─────────────────
+        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        public const uint SWP_NOSIZE     = 0x0001;
+        public const uint SWP_NOMOVE     = 0x0002;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_SHOWWINDOW = 0x0040;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+
+        public struct GameWindowInfo
+        {
+            public int X;
+            public int Y;
+            public int Width;
+            public int Height;
+            public bool IsGameFound;
+        }
+
+        /// <summary>
+        /// Memaksa handle window agar selalu berada di posisi Z-Order teratas (HWND_TOPMOST) tanpa mencuri fokus.
+        /// </summary>
+        public static void EnsureTopmost(IntPtr hWnd)
+        {
+            if (hWnd != IntPtr.Zero)
+            {
+                SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+            }
+        }
+
+        /// <summary>
+        /// Mencari handle window game Point Blank secara aktif (baik dari Foreground maupun FindWindow).
+        /// </summary>
+        public static IntPtr FindGameWindow()
+        {
+            // 1. Cek Foreground Window terlebih dahulu
+            var fgHwnd = GetForegroundWindow();
+            if (fgHwnd != IntPtr.Zero)
+            {
+                var sb = new StringBuilder(256);
+                if (GetWindowText(fgHwnd, sb, 256) > 0)
+                {
+                    var title = sb.ToString();
+                    if (title.Contains("Point Blank", StringComparison.OrdinalIgnoreCase) ||
+                        title.Contains("PointBlank", StringComparison.OrdinalIgnoreCase) ||
+                        title.Contains("PB", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return fgHwnd;
+                    }
+                }
+            }
+
+            // 2. Coba cari dengan title "Point Blank" atau class game engine PB
+            var hwnd = FindWindow(null, "Point Blank");
+            if (hwnd != IntPtr.Zero) return hwnd;
+
+            hwnd = FindWindow(null, "PointBlank");
+            if (hwnd != IntPtr.Zero) return hwnd;
+
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Mengambil informasi posisi dan dimensi window game Point Blank jika aktif, atau Primary Screen.
+        /// </summary>
+        public static GameWindowInfo GetGameOrScreenBounds()
+        {
+            var gameHwnd = FindGameWindow();
+            if (gameHwnd != IntPtr.Zero)
+            {
+                if (GetClientRect(gameHwnd, out RECT clientRect) && clientRect.Width > 100 && clientRect.Height > 100)
+                {
+                    var ptTopLeft = new POINT { x = clientRect.left, y = clientRect.top };
+                    ClientToScreen(gameHwnd, ref ptTopLeft);
+
+                    return new GameWindowInfo
+                    {
+                        X = ptTopLeft.x,
+                        Y = ptTopLeft.y,
+                        Width = clientRect.Width,
+                        Height = clientRect.Height,
+                        IsGameFound = true
+                    };
+                }
+            }
+
+            int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+            int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+            return new GameWindowInfo
+            {
+                X = 0,
+                Y = 0,
+                Width = screenWidth > 0 ? screenWidth : 1920,
+                Height = screenHeight > 0 ? screenHeight : 1080,
+                IsGameFound = false
+            };
+        }
+
+        /// <summary>
+        /// Mengambil koordinat titik tengah pixel fisik layar (Game Window jika sedang aktif/windowed, atau Primary Screen).
+        /// </summary>
+        public static POINT GetGameOrScreenCenter()
+        {
+            var bounds = GetGameOrScreenBounds();
+            return new POINT
+            {
+                x = bounds.X + (bounds.Width / 2),
+                y = bounds.Y + (bounds.Height / 2)
+            };
         }
     }
 }

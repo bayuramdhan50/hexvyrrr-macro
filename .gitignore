@@ -1,5 +1,8 @@
 [Bb]in/
 [Oo]bj/
+publish/
+*.zip
 *.user
 *.suo
 .vs/
+

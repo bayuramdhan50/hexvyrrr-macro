@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using PbRecoil.Core;
@@ -11,27 +12,28 @@ namespace PbRecoil.ViewModels
         private readonly MouseInputEngine _engine;
         private readonly GlobalHotkeyManager _hotkeyManager;
 
-        // ── Presets ─────────────────────────────────────────────────────────────
-        public static readonly int[] DelayPresets  = { 1, 5, 10, 20, 50, 100 }; // ms (1ms = default)
-        public static readonly int[] PullPresets   = { 0, 1, 2, 3, 4, 5, 6, 8, 10, 15, 20 }; // px
-        public static readonly int[] SmoothPresets = { 1, 2, 3, 4, 5, 8, 10 }; // steps
-        public static readonly int[] JitterPresets = { 0, 1, 2, 3 }; // px
+        // ── Presets Kalibrasi ───────────────────────────────────────────────────
+        public static readonly int[] PullPresets     = { 0, 1, 2, 3, 4, 5, 6, 8, 10 }; // px (1px = default halus)
+        public static readonly int[] HoldPresets     = { 5, 8, 10, 12, 15, 18, 20, 25, 30 }; // ms (15ms = default)
+        public static readonly int[] RecoveryPresets = { 2, 4, 6, 8, 10, 12, 15, 20 }; // ms (8ms = default)
+        public static readonly int[] KickPresets     = { 0, 1, 2, 3 }; // px (+1px = default)
 
         private bool _isEngineActive = true;
         private bool _isOverlayActive = true;
+        private bool _isCrosshairVisible = false;
         private bool _isFiring;
-        private string _statusMessage = "AUTO-TAP & RECOIL AKTIF — Tahan LMB untuk menembak.";
+        private string _statusMessage = "SMART AUTO-TAP AKTIF — Tahan LMB untuk menembak.";
 
-        // ── Pengaturan Recoil & Delay (Default Original) ────────────────────────
-        private int _shotHoldMs         = 1;
-        private int _releaseRecoveryMs  = 1;
-        private int _verticalPullPixels = 0;
-        private int _smoothSteps        = 2;
-        private int _jitterRange        = 1;
+        // ── Parameter Smart Engine ──────────────────────────────────────────────
+        private int _verticalPullPixels = 1;  // Default 1px
+        private int _shotHoldMs         = 15; // Default 15ms
+        private int _releaseRecoveryMs  = 8;  // Default 8ms
+        private int _initialKickBonus   = 1;  // Default +1px
 
         // ── HUD Settings Navigation State ──────────────────────────────────────
         private bool _isSettingsVisible = false;
-        private int _selectedSettingIndex = 0; // 0: Hold, 1: Release, 2: Pull, 3: Smooth, 4: Jitter
+        // 0: Pull, 1: Hold, 2: Recovery, 3: Kick, 4: Crosshair
+        private int _selectedSettingIndex = 0;
 
         public bool IsEngineActive
         {
@@ -42,8 +44,8 @@ namespace PbRecoil.ViewModels
                 {
                     _engine.IsEnabled = value;
                     StatusMessage = value
-                        ? "AUTO-TAP & RECOIL AKTIF — Tahan LMB untuk menembak."
-                        : "ENGINE NONAKTIF — Tekan [F1] untuk aktifkan.";
+                        ? "SMART AUTO-TAP AKTIF — Tahan LMB untuk menembak."
+                        : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
                     OnPropertyChanged(nameof(StatusHeader));
                 }
             }
@@ -57,6 +59,21 @@ namespace PbRecoil.ViewModels
             set => SetField(ref _isOverlayActive, value);
         }
 
+        public bool IsCrosshairVisible
+        {
+            get => _isCrosshairVisible;
+            set
+            {
+                if (SetField(ref _isCrosshairVisible, value))
+                {
+                    RequestCrosshairVisibility?.Invoke(value);
+                    OnPropertyChanged(nameof(CrosshairStatusLabel));
+                }
+            }
+        }
+
+        public string CrosshairStatusLabel => _isCrosshairVisible ? "ON" : "OFF";
+
         public bool IsFiring
         {
             get => _isFiring;
@@ -67,6 +84,18 @@ namespace PbRecoil.ViewModels
         {
             get => _statusMessage;
             set => SetField(ref _statusMessage, value);
+        }
+
+        public int VerticalPullPixels
+        {
+            get => _verticalPullPixels;
+            set
+            {
+                if (SetField(ref _verticalPullPixels, value))
+                {
+                    _engine.VerticalPullPixels = value;
+                }
+            }
         }
 
         public int ShotHoldMs
@@ -93,38 +122,14 @@ namespace PbRecoil.ViewModels
             }
         }
 
-        public int VerticalPullPixels
+        public int InitialKickBonus
         {
-            get => _verticalPullPixels;
+            get => _initialKickBonus;
             set
             {
-                if (SetField(ref _verticalPullPixels, value))
+                if (SetField(ref _initialKickBonus, value))
                 {
-                    _engine.VerticalPullPixels = value;
-                }
-            }
-        }
-
-        public int SmoothSteps
-        {
-            get => _smoothSteps;
-            set
-            {
-                if (SetField(ref _smoothSteps, value))
-                {
-                    _engine.SmoothSteps = value;
-                }
-            }
-        }
-
-        public int JitterRange
-        {
-            get => _jitterRange;
-            set
-            {
-                if (SetField(ref _jitterRange, value))
-                {
-                    _engine.JitterRange = value;
+                    _engine.InitialKickBonus = value;
                 }
             }
         }
@@ -148,62 +153,29 @@ namespace PbRecoil.ViewModels
         }
 
         public event Action<bool>? RequestOverlayVisibility;
+        public event Action<bool>? RequestCrosshairVisibility;
 
         // ── Commands ────────────────────────────────────────────────────────────
+        public ICommand ToggleEngineCommand { get; }
+        public ICommand ToggleOverlayCommand { get; }
         public ICommand ToggleSettingsCommand { get; }
-        public ICommand SetShotHoldCommand { get; }
-        public ICommand SetReleaseRecoveryCommand { get; }
-        public ICommand ChangePullCommand { get; }
-        public ICommand ChangeSmoothCommand { get; }
-        public ICommand ChangeJitterCommand { get; }
+        public ICommand ToggleCrosshairCommand { get; }
+        public ICommand SaveConfigCommand { get; }
+        public ICommand LoadConfigCommand { get; }
+        public ICommand ResetDefaultConfigCommand { get; }
 
         public MainViewModel()
         {
             _engine        = new MouseInputEngine();
             _hotkeyManager = new GlobalHotkeyManager();
 
-            // Inisialisasi commands
-            ToggleSettingsCommand = new RelayCommand(_ => ToggleSettingsVisibility());
-            SetShotHoldCommand = new RelayCommand(p =>
-            {
-                if (p != null && int.TryParse(p.ToString(), out int val))
-                {
-                    ShotHoldMs = val;
-                    PlayFeedbackTick(900);
-                }
-            });
-            SetReleaseRecoveryCommand = new RelayCommand(p =>
-            {
-                if (p != null && int.TryParse(p.ToString(), out int val))
-                {
-                    ReleaseRecoveryMs = val;
-                    PlayFeedbackTick(900);
-                }
-            });
-            ChangePullCommand = new RelayCommand(p =>
-            {
-                if (p != null && int.TryParse(p.ToString(), out int delta))
-                {
-                    VerticalPullPixels = Math.Clamp(VerticalPullPixels + delta, 0, 30);
-                    PlayFeedbackTick(850);
-                }
-            });
-            ChangeSmoothCommand = new RelayCommand(p =>
-            {
-                if (p != null && int.TryParse(p.ToString(), out int delta))
-                {
-                    SmoothSteps = Math.Clamp(SmoothSteps + delta, 1, 10);
-                    PlayFeedbackTick(850);
-                }
-            });
-            ChangeJitterCommand = new RelayCommand(p =>
-            {
-                if (p != null && int.TryParse(p.ToString(), out int delta))
-                {
-                    JitterRange = Math.Clamp(JitterRange + delta, 0, 5);
-                    PlayFeedbackTick(850);
-                }
-            });
+            ToggleEngineCommand        = new RelayCommand(_ => IsEngineActive = !IsEngineActive);
+            ToggleOverlayCommand       = new RelayCommand(_ => ToggleOverlay());
+            ToggleSettingsCommand      = new RelayCommand(_ => ToggleSettingsVisibility());
+            ToggleCrosshairCommand     = new RelayCommand(_ => IsCrosshairVisible = !IsCrosshairVisible);
+            SaveConfigCommand          = new RelayCommand(_ => SaveConfig());
+            LoadConfigCommand          = new RelayCommand(_ => LoadConfig());
+            ResetDefaultConfigCommand  = new RelayCommand(_ => ResetDefaultConfig());
 
             // Sync state dari engine ke ViewModel
             _engine.OnStateChanged += state =>
@@ -214,8 +186,8 @@ namespace PbRecoil.ViewModels
                     OnPropertyChanged(nameof(IsEngineActive));
                     OnPropertyChanged(nameof(StatusHeader));
                     StatusMessage = state
-                        ? "AUTO-TAP & RECOIL AKTIF — Tahan LMB untuk menembak."
-                        : "ENGINE NONAKTIF — Tekan [F1] untuk aktifkan.";
+                        ? "SMART AUTO-TAP AKTIF — Tahan LMB untuk menembak."
+                        : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
                 });
             };
 
@@ -227,7 +199,7 @@ namespace PbRecoil.ViewModels
                 });
             };
 
-            // F1 — Toggle Engine
+            // F1 — Toggle Engine ON/OFF
             _hotkeyManager.OnToggleEngine += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(() =>
@@ -273,20 +245,73 @@ namespace PbRecoil.ViewModels
 
         public void Initialize()
         {
-            _engine.ShotHoldMs         = _shotHoldMs;
-            _engine.ReleaseRecoveryMs  = _releaseRecoveryMs;
-            _engine.VerticalPullPixels = _verticalPullPixels;
-            _engine.SmoothSteps        = _smoothSteps;
-            _engine.JitterRange        = _jitterRange;
+            // Auto load saved config jika ada
+            var savedConfig = ConfigService.LoadConfig();
+            ApplyConfigValues(savedConfig);
 
             _engine.Start();
             _hotkeyManager.Start();
+        }
+
+        public void SaveConfig()
+        {
+            var config = new AppConfig
+            {
+                VerticalPullPixels = VerticalPullPixels,
+                ShotHoldMs         = ShotHoldMs,
+                ReleaseRecoveryMs  = ReleaseRecoveryMs,
+                InitialKickBonus   = InitialKickBonus,
+                IsCrosshairVisible = IsCrosshairVisible,
+                IsOverlayActive    = IsOverlayActive
+            };
+
+            bool success = ConfigService.SaveConfig(config);
+            StatusMessage = success
+                ? "✓ KONFIGURASI TERSIMPAN (hexvyrr_config.json)"
+                : "✗ GAGAL MENYIMPAN KONFIGURASI";
+
+            PlayFeedbackTick(success ? 1300 : 400);
+        }
+
+        public void LoadConfig()
+        {
+            var config = ConfigService.LoadConfig();
+            ApplyConfigValues(config);
+            StatusMessage = "✓ KONFIGURASI BERHASIL DIMUAT!";
+            PlayFeedbackTick(1100);
+        }
+
+        public void ResetDefaultConfig()
+        {
+            var defaultConfig = ConfigService.GetDefaultConfig();
+            ApplyConfigValues(defaultConfig);
+            StatusMessage = "↺ KONFIGURASI DI-RESET KE DEFAULT PABRIK";
+            PlayFeedbackTick(900);
+        }
+
+        private void ApplyConfigValues(AppConfig config)
+        {
+            VerticalPullPixels = config.VerticalPullPixels;
+            ShotHoldMs         = config.ShotHoldMs;
+            ReleaseRecoveryMs  = config.ReleaseRecoveryMs;
+            InitialKickBonus   = config.InitialKickBonus;
+            IsCrosshairVisible = config.IsCrosshairVisible;
+            IsOverlayActive    = config.IsOverlayActive;
+
+            _engine.VerticalPullPixels = config.VerticalPullPixels;
+            _engine.ShotHoldMs         = config.ShotHoldMs;
+            _engine.ReleaseRecoveryMs  = config.ReleaseRecoveryMs;
+            _engine.InitialKickBonus   = config.InitialKickBonus;
+
+            RequestCrosshairVisibility?.Invoke(IsCrosshairVisible);
+            RequestOverlayVisibility?.Invoke(IsOverlayActive);
         }
 
         public void ToggleOverlay()
         {
             IsOverlayActive = !IsOverlayActive;
             RequestOverlayVisibility?.Invoke(IsOverlayActive);
+            PlayFeedbackTick(IsOverlayActive ? 1000 : 500);
         }
 
         public void ToggleSettingsVisibility()
@@ -295,15 +320,45 @@ namespace PbRecoil.ViewModels
             PlayFeedbackTick(IsSettingsVisible ? 1100 : 700);
         }
 
+        private List<int> GetActiveMenuIndices()
+        {
+            // 0: Pull, 1: Hold, 2: Recovery, 3: Kick, 4: Crosshair
+            return new List<int> { 0, 1, 2, 3, 4 };
+        }
+
         public void SelectNextSetting()
         {
-            SelectedSettingIndex = (SelectedSettingIndex + 1) % 5;
+            var activeIndices = GetActiveMenuIndices();
+            int currentPos = activeIndices.IndexOf(SelectedSettingIndex);
+
+            if (currentPos < 0)
+            {
+                SelectedSettingIndex = activeIndices[0];
+            }
+            else
+            {
+                int nextPos = (currentPos + 1) % activeIndices.Count;
+                SelectedSettingIndex = activeIndices[nextPos];
+            }
+
             PlayFeedbackTick(950);
         }
 
         public void SelectPreviousSetting()
         {
-            SelectedSettingIndex = (SelectedSettingIndex + 4) % 5;
+            var activeIndices = GetActiveMenuIndices();
+            int currentPos = activeIndices.IndexOf(SelectedSettingIndex);
+
+            if (currentPos < 0)
+            {
+                SelectedSettingIndex = activeIndices[0];
+            }
+            else
+            {
+                int prevPos = (currentPos + activeIndices.Count - 1) % activeIndices.Count;
+                SelectedSettingIndex = activeIndices[prevPos];
+            }
+
             PlayFeedbackTick(950);
         }
 
@@ -311,46 +366,36 @@ namespace PbRecoil.ViewModels
         {
             switch (SelectedSettingIndex)
             {
-                case 0: // Shot Hold
-                    ShotHoldMs = StepNext(ShotHoldMs, DelayPresets);
-                    break;
-                case 1: // Release Recovery
-                    ReleaseRecoveryMs = StepNext(ReleaseRecoveryMs, DelayPresets);
-                    break;
-                case 2: // Vertical Pull
-                    VerticalPullPixels = StepNext(VerticalPullPixels, PullPresets);
-                    break;
-                case 3: // Smooth Steps
-                    SmoothSteps = StepNext(SmoothSteps, SmoothPresets);
-                    break;
-                case 4: // Jitter Range
-                    JitterRange = StepNext(JitterRange, JitterPresets);
-                    break;
+                case 0: VerticalPullPixels = StepNext(VerticalPullPixels, PullPresets); break;
+                case 1: ShotHoldMs         = StepNext(ShotHoldMs, HoldPresets); break;
+                case 2: ReleaseRecoveryMs  = StepNext(ReleaseRecoveryMs, RecoveryPresets); break;
+                case 3: InitialKickBonus   = StepNext(InitialKickBonus, KickPresets); break;
+                case 4: IsCrosshairVisible = !IsCrosshairVisible; break;
             }
-            PlayFeedbackTick(1200);
+
+            int pitch = (SelectedSettingIndex == 4)
+                ? (IsCrosshairVisible ? 1200 : 600)
+                : 1200;
+
+            PlayFeedbackTick(pitch);
         }
 
         public void DecreaseCurrentSetting()
         {
             switch (SelectedSettingIndex)
             {
-                case 0: // Shot Hold
-                    ShotHoldMs = StepPrevious(ShotHoldMs, DelayPresets);
-                    break;
-                case 1: // Release Recovery
-                    ReleaseRecoveryMs = StepPrevious(ReleaseRecoveryMs, DelayPresets);
-                    break;
-                case 2: // Vertical Pull
-                    VerticalPullPixels = StepPrevious(VerticalPullPixels, PullPresets);
-                    break;
-                case 3: // Smooth Steps
-                    SmoothSteps = StepPrevious(SmoothSteps, SmoothPresets);
-                    break;
-                case 4: // Jitter Range
-                    JitterRange = StepPrevious(JitterRange, JitterPresets);
-                    break;
+                case 0: VerticalPullPixels = StepPrevious(VerticalPullPixels, PullPresets); break;
+                case 1: ShotHoldMs         = StepPrevious(ShotHoldMs, HoldPresets); break;
+                case 2: ReleaseRecoveryMs  = StepPrevious(ReleaseRecoveryMs, RecoveryPresets); break;
+                case 3: InitialKickBonus   = StepPrevious(InitialKickBonus, KickPresets); break;
+                case 4: IsCrosshairVisible = !IsCrosshairVisible; break;
             }
-            PlayFeedbackTick(750);
+
+            int pitch = (SelectedSettingIndex == 4)
+                ? (IsCrosshairVisible ? 1200 : 600)
+                : 750;
+
+            PlayFeedbackTick(pitch);
         }
 
         private static int StepNext(int current, int[] presets)
