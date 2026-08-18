@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace PbRecoil.Core
 {
     /// <summary>
-    /// Engine Auto-Tap Smart G-Hub Style untuk Point Blank.
-    /// Mengimplementasikan adaptive dynamic tapping curve dengan kalibrasi halus (tidak terlalu menarik ke bawah).
+    /// Engine Auto-Tap & Anti-Recoil untuk Point Blank.
+    /// Mengimplementasikan adaptive dynamic tapping curve dengan kalibrasi halus.
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
@@ -150,7 +150,7 @@ namespace PbRecoil.Core
                         continue;
                     }
 
-                    // Tahan (HOLD) LMB fisik -> jalankan G-Hub Style Smart Dynamic Tapping
+                    // Tahan (HOLD) LMB fisik -> jalankan Smart Dynamic Tapping
                     if (_isPhysicalLmbDown)
                     {
                         if (!_isFiring)

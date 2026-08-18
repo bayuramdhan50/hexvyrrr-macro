@@ -134,7 +134,7 @@ namespace PbRecoil.Views
             _notifyIcon = new Forms.NotifyIcon
             {
                 Icon = trayIcon,
-                Text = "Hexvyrr Macro — Smart G-Hub Edition",
+                Text = "Hexvyrr Macro",
                 Visible = true,
                 ContextMenuStrip = contextMenu
             };
