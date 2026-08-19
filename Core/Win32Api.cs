@@ -17,6 +17,8 @@ namespace PbRecoil.Core
         public const byte VK_1 = 0x31; // Primary Weapon ('1')
         public const byte VK_3 = 0x33; // Melee / Knife ('3')
         public const byte VK_Q = 0x51; // Quick Switch ('Q')
+        public const byte VK_J = 0x4A; // Secondary Scope Key ('J')
+        public const byte VK_N = 0x4E; // Secondary Fire Key ('N')
 
         // ── Function & Arrow Key Virtual Keys ─────────────────────────────────
         public const int VK_LEFT    = 0x25;
@@ -75,6 +77,9 @@ namespace PbRecoil.Core
 
         [DllImport("user32.dll")]
         public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
+        [DllImport("user32.dll")]
+        public static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
         [DllImport("winmm.dll", EntryPoint = "timeBeginPeriod", SetLastError = true)]
         public static extern uint TimeBeginPeriod(uint uMilliseconds);
@@ -175,12 +180,14 @@ namespace PbRecoil.Core
 
         public static void SendKeyDown(byte vKey)
         {
-            keybd_event(vKey, 0, KEYEVENTF_KEYDOWN, INJECTED_SIGNATURE);
+            byte scanCode = (byte)MapVirtualKey(vKey, 0);
+            keybd_event(vKey, scanCode, KEYEVENTF_KEYDOWN, INJECTED_SIGNATURE);
         }
 
         public static void SendKeyUp(byte vKey)
         {
-            keybd_event(vKey, 0, KEYEVENTF_KEYUP, INJECTED_SIGNATURE);
+            byte scanCode = (byte)MapVirtualKey(vKey, 0);
+            keybd_event(vKey, scanCode, KEYEVENTF_KEYUP, INJECTED_SIGNATURE);
         }
 
         public static bool IsKeyPressed(int vKey)

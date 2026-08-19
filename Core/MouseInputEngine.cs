@@ -251,21 +251,23 @@ namespace PbRecoil.Core
 
         /// <summary>
         /// Mode AWP Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
-        /// [RMB Down] -> 20ms Scope In -> [LMB Down] -> 20ms Fire -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
+        /// [RMB/J Down] -> 30ms Scope In -> [LMB/N Down] -> 25ms Fire -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
         /// [Q Down] -> 20ms -> [Q Up] -> 10ms -> [1 Down] -> 20ms -> [1 Up] -> 10ms ->
-        /// [RMB Up] [LMB Up] -> End Recovery Delay (890ms / 590ms / 300ms)
+        /// [RMB/J Up] [LMB/N Up] -> End Recovery Delay (890ms / 590ms / 300ms)
         /// </summary>
         private void ExecuteAwpCycle(int endRecoveryMs)
         {
-            // 1. Scope In (RMB Down) -> Beri jeda agar animasi zoom PB terinisiasi
+            // 1. Scope In (RMB Down + Key J) -> Mengirim event mouse & hardware scancode key J
             Win32Api.SendRightMouseDown();
-            PreciseSleep(20);
+            Win32Api.SendKeyDown(Win32Api.VK_J);
+            PreciseSleep(30);
             if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
 
-            // 2. Fire (LMB Down) -> Tembak dalam status scoped
+            // 2. Fire (LMB Down + Key N) -> Tembak dalam status scoped
             Win32Api.SendMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_N);
             OnRecoilTick?.Invoke();
-            PreciseSleep(20);
+            PreciseSleep(25);
             if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
 
             // 3. Switch ke Melee (Key 3)
@@ -275,41 +277,45 @@ namespace PbRecoil.Core
             PreciseSleep(10);
             if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
 
-            // 3. Quick Switch (Key Q)
+            // 4. Quick Switch (Key Q)
             Win32Api.SendKeyDown(Win32Api.VK_Q);
             PreciseSleep(20);
             Win32Api.SendKeyUp(Win32Api.VK_Q);
             PreciseSleep(10);
             if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
 
-            // 4. Switch Primary Weapon (Key 1)
+            // 5. Switch Primary Weapon (Key 1)
             Win32Api.SendKeyDown(Win32Api.VK_1);
             PreciseSleep(20);
             Win32Api.SendKeyUp(Win32Api.VK_1);
             PreciseSleep(10);
 
-            // 5. Release Mouse Buttons (RMB Up & LMB Up)
+            // 6. Release Inputs (RMB + J + LMB + N)
             Win32Api.SendRightMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_J);
             Win32Api.SendMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_N);
 
-            // 6. Recovery Delay sebelum tembakan berikutnya
+            // 7. Recovery Delay sebelum tembakan berikutnya
             PreciseSleep(endRecoveryMs);
         }
 
         /// <summary>
         /// Mode SG Tahan (Fire + 3-1 Quick Switch + Delay):
-        /// [LMB Down] -> 20ms -> [LMB Up] -> 10ms ->
+        /// [LMB/N Down] -> 20ms -> [LMB/N Up] -> 10ms ->
         /// [3 Down] -> 20ms -> [3 Up] -> 10ms ->
         /// [1 Down] -> 20ms -> [1 Up] -> End Recovery Delay (750ms / 480ms / 245ms)
         /// </summary>
         private void ExecuteSgCycle(int endRecoveryMs)
         {
-            // 1. Fire (LMB Down -> 20ms -> LMB Up)
+            // 1. Fire (LMB/N Down -> 20ms -> LMB/N Up)
             Win32Api.SendMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_N);
             OnRecoilTick?.Invoke();
 
             PreciseSleep(20);
             Win32Api.SendMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_N);
             PreciseSleep(10);
             if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
 
@@ -339,6 +345,8 @@ namespace PbRecoil.Core
             Win32Api.SendKeyUp(Win32Api.VK_3);
             Win32Api.SendKeyUp(Win32Api.VK_Q);
             Win32Api.SendKeyUp(Win32Api.VK_1);
+            Win32Api.SendKeyUp(Win32Api.VK_J);
+            Win32Api.SendKeyUp(Win32Api.VK_N);
         }
 
         /// <summary>
