@@ -298,8 +298,9 @@
 
                                 <!-- AWP Mode Flow -->
                                 <StackPanel Orientation="Horizontal" Visibility="{Binding IsAwpMode, Converter={StaticResource BoolToVis}}">
-                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="RMB↓" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
-                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB↓" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="RMB (Scope)" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB (Fire)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
                                     <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>

@@ -251,21 +251,24 @@ namespace PbRecoil.Core
 
         /// <summary>
         /// Mode AWP Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
-        /// [RMB Down] [LMB Down] -> 25ms -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
+        /// [RMB Down] -> 20ms Scope In -> [LMB Down] -> 20ms Fire -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
         /// [Q Down] -> 20ms -> [Q Up] -> 10ms -> [1 Down] -> 20ms -> [1 Up] -> 10ms ->
         /// [RMB Up] [LMB Up] -> End Recovery Delay (890ms / 590ms / 300ms)
         /// </summary>
         private void ExecuteAwpCycle(int endRecoveryMs)
         {
-            // 1. Scope In (RMB Down) + Fire (LMB Down)
+            // 1. Scope In (RMB Down) -> Beri jeda agar animasi zoom PB terinisiasi
             Win32Api.SendRightMouseDown();
-            Win32Api.SendMouseDown();
-            OnRecoilTick?.Invoke();
-
-            PreciseSleep(25);
+            PreciseSleep(20);
             if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
 
-            // 2. Switch ke Melee (Key 3)
+            // 2. Fire (LMB Down) -> Tembak dalam status scoped
+            Win32Api.SendMouseDown();
+            OnRecoilTick?.Invoke();
+            PreciseSleep(20);
+            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+
+            // 3. Switch ke Melee (Key 3)
             Win32Api.SendKeyDown(Win32Api.VK_3);
             PreciseSleep(20);
             Win32Api.SendKeyUp(Win32Api.VK_3);
