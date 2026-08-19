@@ -13,6 +13,8 @@ namespace PbRecoil.Views
         private double _dpiScaleX = 1.0;
         private double _dpiScaleY = 1.0;
 
+        public bool IsOverlayRequested { get; set; } = true;
+
         public OverlayWindow()
         {
             InitializeComponent();
@@ -27,20 +29,7 @@ namespace PbRecoil.Views
             {
                 UpdateDpiScale();
                 UpdateLayoutAndPosition();
-            };
-
-            IsVisibleChanged += (s, e) =>
-            {
-                if (IsVisible)
-                {
-                    UpdateDpiScale();
-                    UpdateLayoutAndPosition();
-                    _trackingTimer.Start();
-                }
-                else
-                {
-                    _trackingTimer.Stop();
-                }
+                _trackingTimer.Start();
             };
         }
 
@@ -58,10 +47,33 @@ namespace PbRecoil.Views
 
         /// <summary>
         /// Menyesuaikan ukuran skala dan posisi HUD Overlay mengikuti resolusi game Point Blank atau screen.
-        /// Memaksa Z-order Topmost agar tidak pernah hilang saat Alt+Tab.
+        /// HUD HANYA tampil jika user berada di dalam game Point Blank (Foreground).
         /// </summary>
         public void UpdateLayoutAndPosition()
         {
+            if (!IsOverlayRequested)
+            {
+                if (Visibility != Visibility.Hidden)
+                    Visibility = Visibility.Hidden;
+                return;
+            }
+
+            bool isGameActive = Win32Api.IsPointBlankForeground();
+
+            // Jika game Point Blank TIDAK sedang aktif di foreground, sembunyikan HUD
+            if (!isGameActive)
+            {
+                if (Visibility != Visibility.Hidden)
+                    Visibility = Visibility.Hidden;
+                return;
+            }
+
+            // Jika game Point Blank aktif, pastikan HUD terlihat
+            if (Visibility != Visibility.Visible)
+            {
+                Visibility = Visibility.Visible;
+            }
+
             var bounds = Win32Api.GetGameOrScreenBounds();
 
             // Hitung faktor skala berdasarkan tinggi area game (Baseline 1080p = 0.95 skala dasar agar compact)
@@ -86,8 +98,8 @@ namespace PbRecoil.Views
             Left = wpfLeft;
             Top  = wpfTop;
 
-            // Pastikan window selalu di atas game (Z-Order Topmost) bahkan setelah Alt+Tab
-            if (_hwnd != IntPtr.Zero && IsVisible)
+            // Pastikan window selalu di atas game (Z-Order Topmost)
+            if (_hwnd != IntPtr.Zero && Visibility == Visibility.Visible)
             {
                 Win32Api.EnsureTopmost(_hwnd);
             }

@@ -15,6 +15,8 @@ namespace PbRecoil.Views
         private double _dpiScaleX = 1.0;
         private double _dpiScaleY = 1.0;
 
+        public bool IsCrosshairRequested { get; set; } = false;
+
         public CrosshairOverlay()
         {
             InitializeComponent();
@@ -30,19 +32,6 @@ namespace PbRecoil.Views
             _updateTimer.Tick += (s, e) => UpdatePosition();
 
             Loaded += OnLoaded;
-            IsVisibleChanged += (s, e) =>
-            {
-                if (IsVisible)
-                {
-                    UpdateDpiScale();
-                    UpdatePosition();
-                    _updateTimer.Start();
-                }
-                else
-                {
-                    _updateTimer.Stop();
-                }
-            };
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -51,6 +40,7 @@ namespace PbRecoil.Views
             UpdatePosition();
             Canvas.SetLeft(CrosshairDot, 3);
             Canvas.SetTop(CrosshairDot, 3);
+            _updateTimer.Start();
         }
 
         private void UpdateDpiScale()
@@ -66,11 +56,33 @@ namespace PbRecoil.Views
         }
 
         /// <summary>
-        /// Mengatur posisi window overlay agar tepat berada di titik tengah client game / screen.
-        /// Memaksa Z-order Topmost agar tidak tenggelam saat Alt+Tab.
+        /// Mengatur posisi window overlay agar tepat berada di titik tengah client game.
+        /// Crosshair HANYA tampil jika user berada di dalam game Point Blank (Foreground).
         /// </summary>
         public void UpdatePosition()
         {
+            if (!IsCrosshairRequested)
+            {
+                if (Visibility != Visibility.Hidden)
+                    Visibility = Visibility.Hidden;
+                return;
+            }
+
+            bool isGameActive = Win32Api.IsPointBlankForeground();
+
+            // Sembunyikan Crosshair jika tidak berada di game Point Blank
+            if (!isGameActive)
+            {
+                if (Visibility != Visibility.Hidden)
+                    Visibility = Visibility.Hidden;
+                return;
+            }
+
+            if (Visibility != Visibility.Visible)
+            {
+                Visibility = Visibility.Visible;
+            }
+
             var centerPixel = Win32Api.GetGameOrScreenCenter();
 
             // Konversi dari Physical Screen Pixels ke Logical WPF DIPs
@@ -81,7 +93,7 @@ namespace PbRecoil.Views
             Left = wpfX - 6;
             Top  = wpfY - 6;
 
-            if (_hwnd != IntPtr.Zero && IsVisible)
+            if (_hwnd != IntPtr.Zero && Visibility == Visibility.Visible)
             {
                 Win32Api.EnsureTopmost(_hwnd);
             }

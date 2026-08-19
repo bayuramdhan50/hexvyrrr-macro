@@ -35,7 +35,7 @@ namespace PbRecoil.Core
 
         private Thread? _workerThread;
         private volatile bool _isDisposed;
-        private volatile bool _isEnabled = true;
+        private volatile bool _isEnabled = false; // Default OFF saat pertama kali dijalankan
         private volatile bool _isPhysicalLmbDown;
         private volatile bool _isFiring;
 
@@ -113,19 +113,22 @@ namespace PbRecoil.Core
                     var msg = wParam.ToInt32();
                     if (msg == Win32Api.WM_LBUTTONDOWN)
                     {
-                        _isPhysicalLmbDown = true;
-
-                        if (_isEnabled)
+                        // Hanya intercept jika engine aktif DAN fokus berada di game Point Blank
+                        if (_isEnabled && Win32Api.IsPointBlankForeground())
                         {
+                            _isPhysicalLmbDown = true;
                             return (IntPtr)1; // Tahan sinyal fisik, delegasikan ke Hexvyrr macro loop
+                        }
+                        else
+                        {
+                            _isPhysicalLmbDown = false;
                         }
                     }
                     else if (msg == Win32Api.WM_LBUTTONUP)
                     {
-                        _isPhysicalLmbDown = false;
-
-                        if (_isEnabled)
+                        if (_isPhysicalLmbDown)
                         {
+                            _isPhysicalLmbDown = false;
                             return (IntPtr)1;
                         }
                     }
@@ -143,7 +146,8 @@ namespace PbRecoil.Core
             {
                 while (!_isDisposed)
                 {
-                    if (!_isEnabled)
+                    // Jika engine nonaktif ATAU jendela aktif bukan Point Blank, stand-by
+                    if (!_isEnabled || !Win32Api.IsPointBlankForeground())
                     {
                         if (_isFiring)
                         {
@@ -151,7 +155,8 @@ namespace PbRecoil.Core
                             OnFiringStateChanged?.Invoke(false);
                             ReleaseAllInputs();
                         }
-                        Thread.Sleep(10);
+                        _isPhysicalLmbDown = false;
+                        Thread.Sleep(15);
                         continue;
                     }
 
@@ -358,7 +363,7 @@ namespace PbRecoil.Core
             var sw = Stopwatch.StartNew();
             while (sw.ElapsedMilliseconds < ms)
             {
-                if (!_isPhysicalLmbDown || !_isEnabled) break;
+                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
 
                 if (ms - sw.ElapsedMilliseconds > 2)
                     Thread.Sleep(1);

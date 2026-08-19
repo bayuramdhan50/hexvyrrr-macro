@@ -30,24 +30,31 @@ namespace PbRecoil.Views
 
             _viewModel.RequestOverlayVisibility += isVisible =>
             {
-                if (isVisible) _overlayWindow.Show();
-                else           _overlayWindow.Hide();
+                if (_overlayWindow != null)
+                {
+                    _overlayWindow.IsOverlayRequested = isVisible;
+                    _overlayWindow.UpdateLayoutAndPosition();
+                }
             };
 
             _crosshairOverlay = new CrosshairOverlay();
 
             _viewModel.RequestCrosshairVisibility += isVisible =>
             {
-                if (isVisible) _crosshairOverlay.Show();
-                else           _crosshairOverlay.Hide();
+                if (_crosshairOverlay != null)
+                {
+                    _crosshairOverlay.IsCrosshairRequested = isVisible;
+                    _crosshairOverlay.UpdatePosition();
+                }
             };
 
             InitializeSystemTray();
 
             Loaded += (s, e) =>
             {
+                _overlayWindow.Show();
+                _crosshairOverlay.Show();
                 _viewModel.Initialize();
-                if (_viewModel.IsOverlayActive) _overlayWindow.Show();
 
                 // Pengecekan pembaruan otomatis di background saat aplikasi dibuka
                 CheckForUpdates(isManual: false);

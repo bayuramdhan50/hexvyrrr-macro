@@ -238,6 +238,53 @@ namespace PbRecoil.Core
             }
         }
 
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        /// <summary>
+        /// Memeriksa apakah window yang sedang aktif / fokus di layar saat ini adalah game Point Blank.
+        /// </summary>
+        public static bool IsPointBlankForeground()
+        {
+            var fgHwnd = GetForegroundWindow();
+            if (fgHwnd == IntPtr.Zero) return false;
+
+            // 1. Cek judul window foreground
+            var sb = new StringBuilder(256);
+            if (GetWindowText(fgHwnd, sb, 256) > 0)
+            {
+                var title = sb.ToString();
+                if (title.StartsWith("Point Blank", StringComparison.OrdinalIgnoreCase) ||
+                    title.StartsWith("PointBlank", StringComparison.OrdinalIgnoreCase) ||
+                    title.Equals("Point Blank", StringComparison.OrdinalIgnoreCase) ||
+                    title.Equals("PointBlank", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            // 2. Cek nama proses window foreground
+            try
+            {
+                GetWindowThreadProcessId(fgHwnd, out uint pid);
+                if (pid > 0)
+                {
+                    using var proc = System.Diagnostics.Process.GetProcessById((int)pid);
+                    string procName = proc.ProcessName;
+                    if (procName.Equals("PointBlank", StringComparison.OrdinalIgnoreCase) ||
+                        procName.Equals("PointBlank_ID", StringComparison.OrdinalIgnoreCase) ||
+                        procName.Equals("PB", StringComparison.OrdinalIgnoreCase) ||
+                        procName.StartsWith("PointBlank", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch { }
+
+            return false;
+        }
+
         /// <summary>
         /// Mencari handle window game Point Blank secara aktif (baik dari Foreground maupun FindWindow).
         /// </summary>
@@ -252,8 +299,7 @@ namespace PbRecoil.Core
                 {
                     var title = sb.ToString();
                     if (title.Contains("Point Blank", StringComparison.OrdinalIgnoreCase) ||
-                        title.Contains("PointBlank", StringComparison.OrdinalIgnoreCase) ||
-                        title.Contains("PB", StringComparison.OrdinalIgnoreCase))
+                        title.Contains("PointBlank", StringComparison.OrdinalIgnoreCase))
                     {
                         return fgHwnd;
                     }

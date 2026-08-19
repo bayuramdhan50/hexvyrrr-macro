@@ -17,11 +17,11 @@ namespace PbRecoil.ViewModels
         public static readonly int[] ReleasePresets = { 0, 1, 2, 4, 6, 8, 10, 12, 15, 20 };            // ms (0ms = default)
         public static readonly MacroMode[] AvailableModes = (MacroMode[])Enum.GetValues(typeof(MacroMode));
 
-        private bool _isEngineActive = true;
+        private bool _isEngineActive = false; // Default OFF saat pertama kali dijalankan
         private bool _isOverlayActive = true;
         private bool _isCrosshairVisible = false;
         private bool _isFiring;
-        private string _statusMessage = "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak.";
+        private string _statusMessage = "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
 
         // ── Parameter Mode Senjata & Timing ─────────────────────────────────────
         private MacroMode _selectedMode = MacroMode.AssaultNoRecoil;
