@@ -6,10 +6,8 @@ namespace PbRecoil.Core
 {
     public class AppConfig
     {
-        public int VerticalPullPixels { get; set; } = 1;
-        public int ShotHoldMs { get; set; } = 15;
-        public int ReleaseRecoveryMs { get; set; } = 8;
-        public int InitialKickBonus { get; set; } = 1;
+        public int HoldMs { get; set; } = 20;
+        public int ReleaseMs { get; set; } = 0;
         public bool IsCrosshairVisible { get; set; } = false;
         public bool IsOverlayActive { get; set; } = true;
     }
@@ -53,10 +51,8 @@ namespace PbRecoil.Core
         {
             return new AppConfig
             {
-                VerticalPullPixels = 1,
-                ShotHoldMs         = 15,
-                ReleaseRecoveryMs  = 8,
-                InitialKickBonus   = 1,
+                HoldMs             = 20,
+                ReleaseMs          = 0,
                 IsCrosshairVisible = false,
                 IsOverlayActive    = true
             };

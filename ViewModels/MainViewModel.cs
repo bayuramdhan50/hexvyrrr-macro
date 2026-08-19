@@ -12,27 +12,23 @@ namespace PbRecoil.ViewModels
         private readonly MouseInputEngine _engine;
         private readonly GlobalHotkeyManager _hotkeyManager;
 
-        // ── Presets Kalibrasi ───────────────────────────────────────────────────
-        public static readonly int[] PullPresets     = { 0, 1, 2, 3, 4, 5, 6, 8, 10 }; // px (1px = default halus)
-        public static readonly int[] HoldPresets     = { 5, 8, 10, 12, 15, 18, 20, 25, 30 }; // ms (15ms = default)
-        public static readonly int[] RecoveryPresets = { 2, 4, 6, 8, 10, 12, 15, 20 }; // ms (8ms = default)
-        public static readonly int[] KickPresets     = { 0, 1, 2, 3 }; // px (+1px = default)
+        // ── Presets Kalibrasi Timing Hexvyrr Macro ──────────────────────────────
+        public static readonly int[] HoldPresets    = { 5, 8, 10, 12, 15, 18, 20, 22, 25, 30, 40, 50 }; // ms (20ms = default)
+        public static readonly int[] ReleasePresets = { 0, 1, 2, 4, 6, 8, 10, 12, 15, 20 };            // ms (0ms = default)
 
         private bool _isEngineActive = true;
         private bool _isOverlayActive = true;
         private bool _isCrosshairVisible = false;
         private bool _isFiring;
-        private string _statusMessage = "SMART AUTO-TAP AKTIF — Tahan LMB untuk menembak.";
+        private string _statusMessage = "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak.";
 
-        // ── Parameter Smart Engine ──────────────────────────────────────────────
-        private int _verticalPullPixels = 1;  // Default 1px
-        private int _shotHoldMs         = 15; // Default 15ms
-        private int _releaseRecoveryMs  = 8;  // Default 8ms
-        private int _initialKickBonus   = 1;  // Default +1px
+        // ── Parameter Macro Timing ──────────────────────────────────────────────
+        private int _holdMs    = 20; // Default 20ms
+        private int _releaseMs = 0;  // Default 0ms
 
         // ── HUD Settings Navigation State ──────────────────────────────────────
         private bool _isSettingsVisible = false;
-        // 0: Pull, 1: Hold, 2: Recovery, 3: Kick, 4: Crosshair
+        // 0: Hold Time, 1: Release Delay, 2: Crosshair Dot
         private int _selectedSettingIndex = 0;
 
         public bool IsEngineActive
@@ -44,7 +40,7 @@ namespace PbRecoil.ViewModels
                 {
                     _engine.IsEnabled = value;
                     StatusMessage = value
-                        ? "SMART AUTO-TAP AKTIF — Tahan LMB untuk menembak."
+                        ? "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak."
                         : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
                     OnPropertyChanged(nameof(StatusHeader));
                 }
@@ -86,50 +82,26 @@ namespace PbRecoil.ViewModels
             set => SetField(ref _statusMessage, value);
         }
 
-        public int VerticalPullPixels
+        public int HoldMs
         {
-            get => _verticalPullPixels;
+            get => _holdMs;
             set
             {
-                if (SetField(ref _verticalPullPixels, value))
+                if (SetField(ref _holdMs, value))
                 {
-                    _engine.VerticalPullPixels = value;
+                    _engine.HoldMs = value;
                 }
             }
         }
 
-        public int ShotHoldMs
+        public int ReleaseMs
         {
-            get => _shotHoldMs;
+            get => _releaseMs;
             set
             {
-                if (SetField(ref _shotHoldMs, value))
+                if (SetField(ref _releaseMs, value))
                 {
-                    _engine.ShotHoldMs = value;
-                }
-            }
-        }
-
-        public int ReleaseRecoveryMs
-        {
-            get => _releaseRecoveryMs;
-            set
-            {
-                if (SetField(ref _releaseRecoveryMs, value))
-                {
-                    _engine.ReleaseRecoveryMs = value;
-                }
-            }
-        }
-
-        public int InitialKickBonus
-        {
-            get => _initialKickBonus;
-            set
-            {
-                if (SetField(ref _initialKickBonus, value))
-                {
-                    _engine.InitialKickBonus = value;
+                    _engine.ReleaseMs = value;
                 }
             }
         }
@@ -186,7 +158,7 @@ namespace PbRecoil.ViewModels
                     OnPropertyChanged(nameof(IsEngineActive));
                     OnPropertyChanged(nameof(StatusHeader));
                     StatusMessage = state
-                        ? "SMART AUTO-TAP AKTIF — Tahan LMB untuk menembak."
+                        ? "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak."
                         : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
                 });
             };
@@ -257,10 +229,8 @@ namespace PbRecoil.ViewModels
         {
             var config = new AppConfig
             {
-                VerticalPullPixels = VerticalPullPixels,
-                ShotHoldMs         = ShotHoldMs,
-                ReleaseRecoveryMs  = ReleaseRecoveryMs,
-                InitialKickBonus   = InitialKickBonus,
+                HoldMs             = HoldMs,
+                ReleaseMs          = ReleaseMs,
                 IsCrosshairVisible = IsCrosshairVisible,
                 IsOverlayActive    = IsOverlayActive
             };
@@ -285,23 +255,19 @@ namespace PbRecoil.ViewModels
         {
             var defaultConfig = ConfigService.GetDefaultConfig();
             ApplyConfigValues(defaultConfig);
-            StatusMessage = "↺ KONFIGURASI DI-RESET KE DEFAULT PABRIK";
+            StatusMessage = "↺ KONFIGURASI DI-RESET KE DEFAULT (20ms/0ms)";
             PlayFeedbackTick(900);
         }
 
         private void ApplyConfigValues(AppConfig config)
         {
-            VerticalPullPixels = config.VerticalPullPixels;
-            ShotHoldMs         = config.ShotHoldMs;
-            ReleaseRecoveryMs  = config.ReleaseRecoveryMs;
-            InitialKickBonus   = config.InitialKickBonus;
+            HoldMs             = config.HoldMs;
+            ReleaseMs          = config.ReleaseMs;
             IsCrosshairVisible = config.IsCrosshairVisible;
             IsOverlayActive    = config.IsOverlayActive;
 
-            _engine.VerticalPullPixels = config.VerticalPullPixels;
-            _engine.ShotHoldMs         = config.ShotHoldMs;
-            _engine.ReleaseRecoveryMs  = config.ReleaseRecoveryMs;
-            _engine.InitialKickBonus   = config.InitialKickBonus;
+            _engine.HoldMs     = config.HoldMs;
+            _engine.ReleaseMs  = config.ReleaseMs;
 
             RequestCrosshairVisibility?.Invoke(IsCrosshairVisible);
             RequestOverlayVisibility?.Invoke(IsOverlayActive);
@@ -320,10 +286,10 @@ namespace PbRecoil.ViewModels
             PlayFeedbackTick(IsSettingsVisible ? 1100 : 700);
         }
 
-        private List<int> GetActiveMenuIndices()
+        private static List<int> GetActiveMenuIndices()
         {
-            // 0: Pull, 1: Hold, 2: Recovery, 3: Kick, 4: Crosshair
-            return new List<int> { 0, 1, 2, 3, 4 };
+            // 0: Hold Time, 1: Release Delay, 2: Crosshair
+            return new List<int> { 0, 1, 2 };
         }
 
         public void SelectNextSetting()
@@ -366,14 +332,12 @@ namespace PbRecoil.ViewModels
         {
             switch (SelectedSettingIndex)
             {
-                case 0: VerticalPullPixels = StepNext(VerticalPullPixels, PullPresets); break;
-                case 1: ShotHoldMs         = StepNext(ShotHoldMs, HoldPresets); break;
-                case 2: ReleaseRecoveryMs  = StepNext(ReleaseRecoveryMs, RecoveryPresets); break;
-                case 3: InitialKickBonus   = StepNext(InitialKickBonus, KickPresets); break;
-                case 4: IsCrosshairVisible = !IsCrosshairVisible; break;
+                case 0: HoldMs             = StepNext(HoldMs, HoldPresets); break;
+                case 1: ReleaseMs          = StepNext(ReleaseMs, ReleasePresets); break;
+                case 2: IsCrosshairVisible = !IsCrosshairVisible; break;
             }
 
-            int pitch = (SelectedSettingIndex == 4)
+            int pitch = (SelectedSettingIndex == 2)
                 ? (IsCrosshairVisible ? 1200 : 600)
                 : 1200;
 
@@ -384,14 +348,12 @@ namespace PbRecoil.ViewModels
         {
             switch (SelectedSettingIndex)
             {
-                case 0: VerticalPullPixels = StepPrevious(VerticalPullPixels, PullPresets); break;
-                case 1: ShotHoldMs         = StepPrevious(ShotHoldMs, HoldPresets); break;
-                case 2: ReleaseRecoveryMs  = StepPrevious(ReleaseRecoveryMs, RecoveryPresets); break;
-                case 3: InitialKickBonus   = StepPrevious(InitialKickBonus, KickPresets); break;
-                case 4: IsCrosshairVisible = !IsCrosshairVisible; break;
+                case 0: HoldMs             = StepPrevious(HoldMs, HoldPresets); break;
+                case 1: ReleaseMs          = StepPrevious(ReleaseMs, ReleasePresets); break;
+                case 2: IsCrosshairVisible = !IsCrosshairVisible; break;
             }
 
-            int pitch = (SelectedSettingIndex == 4)
+            int pitch = (SelectedSettingIndex == 2)
                 ? (IsCrosshairVisible ? 1200 : 600)
                 : 750;
 

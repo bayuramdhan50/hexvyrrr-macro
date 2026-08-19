@@ -78,31 +78,17 @@
 
                 <!-- Section 1 Summary Pill Badges -->
                 <WrapPanel Margin="0,6,0,3">
-                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Pull: " FontSize="9" Foreground="#8B949E"/>
-                            <TextBlock Text="{Binding VerticalPullPixels, StringFormat={}{0}px}" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Hold: " FontSize="9" Foreground="#8B949E"/>
-                            <TextBlock Text="{Binding ShotHoldMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
+                            <TextBlock Text="{Binding HoldMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Recov: " FontSize="9" Foreground="#8B949E"/>
-                            <TextBlock Text="{Binding ReleaseRecoveryMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Background="#141B26" CornerRadius="3" Padding="5,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Kick: " FontSize="9" Foreground="#8B949E"/>
-                            <TextBlock Text="{Binding InitialKickBonus, StringFormat=+{0}px}" FontSize="9" FontWeight="Bold" Foreground="#FFA500"/>
+                            <TextBlock Text="Release: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding ReleaseMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
                         </StackPanel>
                     </Border>
                 </WrapPanel>
@@ -136,7 +122,7 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="⚙ SMART CONFIG" FontWeight="Black" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="⚡ MACRO CONFIG" FontWeight="Black" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
                         <TextBlock Text=" // LIVE" Foreground="#00FF88" FontSize="10" FontWeight="Bold" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
@@ -146,8 +132,8 @@
                     </Border>
                 </Grid>
 
-                <!-- ── SECTION 1: RECOIL & TIMING ──────────────────────── -->
-                <!-- Menu Item 0: Vertical Recoil Pull -->
+                <!-- ── SECTION 1: MACRO TIMING ─────────────────────────── -->
+                <!-- Menu Item 0: Hold Time -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=0}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=0}">
@@ -160,16 +146,16 @@
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=0}"/>
-                        <TextBlock Grid.Column="1" Text="Recoil Pull" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="Hold Time (Down)" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding VerticalPullPixels, StringFormat=◄  {0} px  ►}" FontSize="9.5" FontWeight="Bold"
+                        <TextBlock Grid.Column="2" Text="{Binding HoldMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
-                <!-- Menu Item 1: Shot Hold Duration -->
+                <!-- Menu Item 1: Release Delay -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=1}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=1}">
@@ -182,60 +168,16 @@
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
                                    Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=1}"/>
-                        <TextBlock Grid.Column="1" Text="Shot Hold Time" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="Release Delay (Up)" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding ShotHoldMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
+                        <TextBlock Grid.Column="2" Text="{Binding ReleaseMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
-                <!-- Menu Item 2: Release Recovery Delay -->
-                <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
-                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=2}"
-                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=2}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
-                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=2}"/>
-                        <TextBlock Grid.Column="1" Text="Release Recovery" FontSize="9.5" FontWeight="SemiBold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding ReleaseRecoveryMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
-
-                <!-- Menu Item 3: Initial Kick Compensation -->
-                <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
-                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=3}"
-                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=3}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
-                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=3}"/>
-                        <TextBlock Grid.Column="1" Text="1st-Kick Bonus" FontSize="9.5" FontWeight="SemiBold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding InitialKickBonus, StringFormat=◄  +{0} px  ►}" FontSize="9.5" FontWeight="Bold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
-
-                <!-- ── SECTION 2: DISPLAY / CROSSHAIR (TERPISAH JELAS) ── -->
+                <!-- ── SECTION 2: DISPLAY / CROSSHAIR ──────────────────── -->
                 <Grid Margin="0,4,0,3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -248,10 +190,10 @@
                     <Rectangle Grid.Column="2" Height="1" Fill="#1E2D42" VerticalAlignment="Center"/>
                 </Grid>
 
-                <!-- Menu Item 4: Crosshair Dot (ON / OFF) -->
+                <!-- Menu Item 2: Crosshair Dot (ON / OFF) -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,5" BorderThickness="1"
-                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=4}"
-                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=4}">
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=2}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=2}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -259,13 +201,13 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
-                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=4}"/>
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=2}"/>
                         <TextBlock Grid.Column="1" Text="Crosshair Dot" FontSize="9.5" FontWeight="SemiBold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
                                    VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="2" Text="{Binding CrosshairStatusLabel, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
