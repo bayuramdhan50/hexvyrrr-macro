@@ -166,4 +166,55 @@ namespace PbRecoil.Views
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
+
+    public class ModeActiveBgConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush ActiveBrush = new(MediaColor.FromArgb(0x40, 0x00, 0xF0, 0xFF));
+        private static readonly SolidColorBrush InactiveBrush = new(MediaColor.FromArgb(0x20, 0x13, 0x1D, 0x2B));
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value != null && parameter != null && value.ToString() == parameter.ToString())
+            {
+                return ActiveBrush;
+            }
+            return InactiveBrush;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class ModeActiveFgConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush ActiveBrush = new(MediaColor.FromRgb(0x00, 0xF0, 0xFF));
+        private static readonly SolidColorBrush InactiveBrush = new(MediaColor.FromRgb(0x8B, 0x94, 0x9E));
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value != null && parameter != null && value.ToString() == parameter.ToString())
+            {
+                return ActiveBrush;
+            }
+            return InactiveBrush;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class ModeActiveBorderConverter : IValueConverter
+    {
+        private static readonly SolidColorBrush ActiveBrush = new(MediaColor.FromRgb(0x00, 0xF0, 0xFF));
+        private static readonly SolidColorBrush InactiveBrush = new(MediaColor.FromRgb(0x22, 0x33, 0x4A));
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value != null && parameter != null && value.ToString() == parameter.ToString())
+            {
+                return ActiveBrush;
+            }
+            return InactiveBrush;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
 }

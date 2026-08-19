@@ -62,7 +62,7 @@
                             </Ellipse.Effect>
                         </Ellipse>
                         <TextBlock Text="HEXVYRR" FontWeight="ExtraBold" Foreground="#00F0FF" FontSize="11" VerticalAlignment="Center"/>
-                        <TextBlock Text=" // SMART HUD" Foreground="#00FF88" FontSize="10" FontWeight="Bold" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock Text=" // HUD" Foreground="#00FF88" FontSize="10" FontWeight="Bold" Margin="4,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
                     <!-- Status Badge -->
@@ -76,8 +76,13 @@
                     </Border>
                 </Grid>
 
-                <!-- Section 1 Summary Pill Badges -->
+                <!-- Active Mode Pill & Timing Badges -->
                 <WrapPanel Margin="0,6,0,3">
+                    <!-- Mode Badge -->
+                    <Border Background="#1C2D44" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#00F0FF" BorderThickness="1">
+                        <TextBlock Text="{Binding ModeShortBadge}" FontSize="9" FontWeight="Black" Foreground="#00F0FF"/>
+                    </Border>
+
                     <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Hold: " FontSize="9" Foreground="#8B949E"/>
@@ -87,13 +92,13 @@
 
                     <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Release: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="Rel: " FontSize="9" Foreground="#8B949E"/>
                             <TextBlock Text="{Binding ReleaseMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
                         </StackPanel>
                     </Border>
                 </WrapPanel>
 
-                <!-- Section 2 Summary: Crosshair (Terpisah) -->
+                <!-- Crosshair Dot Summary -->
                 <Border Background="#0E1624" CornerRadius="3" Padding="5,2" Margin="0,0,0,4" BorderBrush="#1F2E45" BorderThickness="1">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -132,8 +137,8 @@
                     </Border>
                 </Grid>
 
-                <!-- ── SECTION 1: MACRO TIMING ─────────────────────────── -->
-                <!-- Menu Item 0: Hold Time -->
+                <!-- ── SECTION 1: WEAPON & QC MODE ─────────────────────── -->
+                <!-- Menu Item 0: Weapon / QC Mode -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=0}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=0}">
@@ -146,16 +151,17 @@
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=0}"/>
-                        <TextBlock Grid.Column="1" Text="Hold Time (Down)" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="Weapon / QC Mode" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding HoldMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
+                        <TextBlock Grid.Column="2" Text="{Binding ModeShortBadge, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
-                <!-- Menu Item 1: Release Delay -->
+                <!-- ── SECTION 2: MACRO TIMING ─────────────────────────── -->
+                <!-- Menu Item 1: Hold Time -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=1}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=1}">
@@ -168,16 +174,38 @@
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
                                    Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=1}"/>
-                        <TextBlock Grid.Column="1" Text="Release Delay (Up)" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="Hold Time (Down)" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding ReleaseMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
+                        <TextBlock Grid.Column="2" Text="{Binding HoldMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=1}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
-                <!-- ── SECTION 2: DISPLAY / CROSSHAIR ──────────────────── -->
+                <!-- Menu Item 2: Release Delay -->
+                <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=2}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=2}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=2}"/>
+                        <TextBlock Grid.Column="1" Text="Release Delay (Up)" FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding ReleaseMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- ── SECTION 3: DISPLAY / CROSSHAIR ──────────────────── -->
                 <Grid Margin="0,4,0,3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -190,10 +218,10 @@
                     <Rectangle Grid.Column="2" Height="1" Fill="#1E2D42" VerticalAlignment="Center"/>
                 </Grid>
 
-                <!-- Menu Item 2: Crosshair Dot (ON / OFF) -->
+                <!-- Menu Item 3: Crosshair Dot (ON / OFF) -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,5" BorderThickness="1"
-                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=2}"
-                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=2}">
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=3}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=3}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -201,13 +229,13 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
-                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=2}"/>
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=3}"/>
                         <TextBlock Grid.Column="1" Text="Crosshair Dot" FontSize="9.5" FontWeight="SemiBold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
                                    VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="2" Text="{Binding CrosshairStatusLabel, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
-                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=3}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>

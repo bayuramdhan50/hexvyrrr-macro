@@ -13,6 +13,11 @@ namespace PbRecoil.Core
         public const int VK_LBUTTON = 0x01;
         public const int VK_RBUTTON = 0x02;
 
+        // ── Keyboard Virtual Keys (Quick Switch & Weapons) ────────────────────
+        public const byte VK_1 = 0x31; // Primary Weapon ('1')
+        public const byte VK_3 = 0x33; // Melee / Knife ('3')
+        public const byte VK_Q = 0x51; // Quick Switch ('Q')
+
         // ── Function & Arrow Key Virtual Keys ─────────────────────────────────
         public const int VK_LEFT    = 0x25;
         public const int VK_UP      = 0x26;
@@ -23,10 +28,15 @@ namespace PbRecoil.Core
         public const int VK_F3      = 0x72;
         public const int VK_F4      = 0x73;
 
-        // ── Mouse Event Flags ──────────────────────────────────────────────────
-        public const uint MOUSEEVENTF_MOVE     = 0x0001;
-        public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
-        public const uint MOUSEEVENTF_LEFTUP   = 0x0004;
+        // ── Mouse & Keyboard Event Flags ───────────────────────────────────────
+        public const uint MOUSEEVENTF_MOVE      = 0x0001;
+        public const uint MOUSEEVENTF_LEFTDOWN  = 0x0002;
+        public const uint MOUSEEVENTF_LEFTUP    = 0x0004;
+        public const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
+        public const uint MOUSEEVENTF_RIGHTUP   = 0x0010;
+
+        public const uint KEYEVENTF_KEYDOWN = 0x0000;
+        public const uint KEYEVENTF_KEYUP   = 0x0002;
 
         // ── Windows Hook & Messages ────────────────────────────────────────────
         public const int WH_MOUSE_LL    = 14;
@@ -62,6 +72,9 @@ namespace PbRecoil.Core
 
         [DllImport("user32.dll")]
         public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
+
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 
         [DllImport("winmm.dll", EntryPoint = "timeBeginPeriod", SetLastError = true)]
         public static extern uint TimeBeginPeriod(uint uMilliseconds);
@@ -133,7 +146,7 @@ namespace PbRecoil.Core
         public const int SM_CXSCREEN = 0;
         public const int SM_CYSCREEN = 1;
 
-        // ── Mouse Simulation Helpers ────────────────────────────────────────────
+        // ── Mouse & Keyboard Simulation Helpers ─────────────────────────────────
 
         public static void SendMouseMove(int dx, int dy)
         {
@@ -148,6 +161,26 @@ namespace PbRecoil.Core
         public static void SendMouseUp()
         {
             mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, INJECTED_SIGNATURE);
+        }
+
+        public static void SendRightMouseDown()
+        {
+            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, INJECTED_SIGNATURE);
+        }
+
+        public static void SendRightMouseUp()
+        {
+            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, INJECTED_SIGNATURE);
+        }
+
+        public static void SendKeyDown(byte vKey)
+        {
+            keybd_event(vKey, 0, KEYEVENTF_KEYDOWN, INJECTED_SIGNATURE);
+        }
+
+        public static void SendKeyUp(byte vKey)
+        {
+            keybd_event(vKey, 0, KEYEVENTF_KEYUP, INJECTED_SIGNATURE);
         }
 
         public static bool IsKeyPressed(int vKey)

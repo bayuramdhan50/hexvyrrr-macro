@@ -15,6 +15,7 @@ namespace PbRecoil.ViewModels
         // ── Presets Kalibrasi Timing Hexvyrr Macro ──────────────────────────────
         public static readonly int[] HoldPresets    = { 5, 8, 10, 12, 15, 18, 20, 22, 25, 30, 40, 50 }; // ms (20ms = default)
         public static readonly int[] ReleasePresets = { 0, 1, 2, 4, 6, 8, 10, 12, 15, 20 };            // ms (0ms = default)
+        public static readonly MacroMode[] AvailableModes = (MacroMode[])Enum.GetValues(typeof(MacroMode));
 
         private bool _isEngineActive = true;
         private bool _isOverlayActive = true;
@@ -22,13 +23,14 @@ namespace PbRecoil.ViewModels
         private bool _isFiring;
         private string _statusMessage = "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak.";
 
-        // ── Parameter Macro Timing ──────────────────────────────────────────────
+        // ── Parameter Mode Senjata & Timing ─────────────────────────────────────
+        private MacroMode _selectedMode = MacroMode.AssaultNoRecoil;
         private int _holdMs    = 20; // Default 20ms
         private int _releaseMs = 0;  // Default 0ms
 
         // ── HUD Settings Navigation State ──────────────────────────────────────
         private bool _isSettingsVisible = false;
-        // 0: Hold Time, 1: Release Delay, 2: Crosshair Dot
+        // 0: Mode, 1: Hold Time, 2: Release Delay, 3: Crosshair Dot
         private int _selectedSettingIndex = 0;
 
         public bool IsEngineActive
@@ -39,9 +41,7 @@ namespace PbRecoil.ViewModels
                 if (SetField(ref _isEngineActive, value))
                 {
                     _engine.IsEnabled = value;
-                    StatusMessage = value
-                        ? "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak."
-                        : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
+                    UpdateStatusMessage();
                     OnPropertyChanged(nameof(StatusHeader));
                 }
             }
@@ -81,6 +81,65 @@ namespace PbRecoil.ViewModels
             get => _statusMessage;
             set => SetField(ref _statusMessage, value);
         }
+
+        public MacroMode SelectedMode
+        {
+            get => _selectedMode;
+            set
+            {
+                if (SetField(ref _selectedMode, value))
+                {
+                    _engine.CurrentMode = value;
+                    OnPropertyChanged(nameof(ModeName));
+                    OnPropertyChanged(nameof(ModeShortBadge));
+                    OnPropertyChanged(nameof(ModeDescription));
+                    OnPropertyChanged(nameof(IsAssaultMode));
+                    OnPropertyChanged(nameof(IsAwpMode));
+                    OnPropertyChanged(nameof(IsSgMode));
+                    UpdateStatusMessage();
+                }
+            }
+        }
+
+        public string ModeName => SelectedMode switch
+        {
+            MacroMode.AssaultNoRecoil => "ASSAULT / SMG (NO RECOIL)",
+            MacroMode.AwpNormal       => "AWP TAHAN (NO QC — 890ms)",
+            MacroMode.AwpQc50         => "AWP TAHAN (QC 50% — 590ms)",
+            MacroMode.AwpQc75         => "AWP TAHAN (QC 75% — 300ms)",
+            MacroMode.SgNormal        => "SG TAHAN (NO QC — 750ms)",
+            MacroMode.SgQc50          => "SG TAHAN (QC 50% — 480ms)",
+            MacroMode.SgQc75          => "SG TAHAN (QC 75% — 245ms)",
+            _                         => "HEXVYRR MACRO"
+        };
+
+        public string ModeShortBadge => SelectedMode switch
+        {
+            MacroMode.AssaultNoRecoil => "AR RECOIL",
+            MacroMode.AwpNormal       => "AWP NORMAL",
+            MacroMode.AwpQc50         => "AWP QC 50%",
+            MacroMode.AwpQc75         => "AWP QC 75%",
+            MacroMode.SgNormal        => "SG NORMAL",
+            MacroMode.SgQc50          => "SG QC 50%",
+            MacroMode.SgQc75          => "SG QC 75%",
+            _                         => "MACRO"
+        };
+
+        public string ModeDescription => SelectedMode switch
+        {
+            MacroMode.AssaultNoRecoil => "Auto-Tap ultra presisi untuk senjata Assault Rifle dan SMG.",
+            MacroMode.AwpNormal       => "Sniper AWP scope + tembak + switch 3-Q-1 otomatis tanpa QC delay.",
+            MacroMode.AwpQc50         => "Sniper AWP scope + tembak + switch 3-Q-1 dengan timing QC 50%.",
+            MacroMode.AwpQc75         => "Sniper AWP scope + tembak + switch 3-Q-1 ultra cepat (QC 75%).",
+            MacroMode.SgNormal        => "Shotgun tembak + switch 3-1 otomatis interval standar.",
+            MacroMode.SgQc50          => "Shotgun tembak + switch 3-1 otomatis dengan timing QC 50%.",
+            MacroMode.SgQc75          => "Shotgun tembak + switch 3-1 ultra cepat (QC 75%).",
+            _                         => ""
+        };
+
+        public bool IsAssaultMode => SelectedMode == MacroMode.AssaultNoRecoil;
+        public bool IsAwpMode     => SelectedMode is MacroMode.AwpNormal or MacroMode.AwpQc50 or MacroMode.AwpQc75;
+        public bool IsSgMode      => SelectedMode is MacroMode.SgNormal or MacroMode.SgQc50 or MacroMode.SgQc75;
 
         public int HoldMs
         {
@@ -132,6 +191,7 @@ namespace PbRecoil.ViewModels
         public ICommand ToggleOverlayCommand { get; }
         public ICommand ToggleSettingsCommand { get; }
         public ICommand ToggleCrosshairCommand { get; }
+        public ICommand SelectModeCommand { get; }
         public ICommand SaveConfigCommand { get; }
         public ICommand LoadConfigCommand { get; }
         public ICommand ResetDefaultConfigCommand { get; }
@@ -145,6 +205,7 @@ namespace PbRecoil.ViewModels
             ToggleOverlayCommand       = new RelayCommand(_ => ToggleOverlay());
             ToggleSettingsCommand      = new RelayCommand(_ => ToggleSettingsVisibility());
             ToggleCrosshairCommand     = new RelayCommand(_ => IsCrosshairVisible = !IsCrosshairVisible);
+            SelectModeCommand          = new RelayCommand(param => SetModeFromParam(param));
             SaveConfigCommand          = new RelayCommand(_ => SaveConfig());
             LoadConfigCommand          = new RelayCommand(_ => LoadConfig());
             ResetDefaultConfigCommand  = new RelayCommand(_ => ResetDefaultConfig());
@@ -157,9 +218,7 @@ namespace PbRecoil.ViewModels
                     _isEngineActive = state;
                     OnPropertyChanged(nameof(IsEngineActive));
                     OnPropertyChanged(nameof(StatusHeader));
-                    StatusMessage = state
-                        ? "HEXVYRR MACRO AKTIF — Tahan LMB untuk menembak."
-                        : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
+                    UpdateStatusMessage();
                 });
             };
 
@@ -215,9 +274,29 @@ namespace PbRecoil.ViewModels
             };
         }
 
+        private void SetModeFromParam(object? param)
+        {
+            if (param is MacroMode mode)
+            {
+                SelectedMode = mode;
+                PlayFeedbackTick(1100);
+            }
+            else if (param is string str && Enum.TryParse<MacroMode>(str, out var parsedMode))
+            {
+                SelectedMode = parsedMode;
+                PlayFeedbackTick(1100);
+            }
+        }
+
+        private void UpdateStatusMessage()
+        {
+            StatusMessage = IsEngineActive
+                ? $"[{ModeShortBadge}] AKTIF — Tahan LMB untuk aksi."
+                : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
+        }
+
         public void Initialize()
         {
-            // Auto load saved config jika ada
             var savedConfig = ConfigService.LoadConfig();
             ApplyConfigValues(savedConfig);
 
@@ -229,6 +308,7 @@ namespace PbRecoil.ViewModels
         {
             var config = new AppConfig
             {
+                SelectedMode       = SelectedMode,
                 HoldMs             = HoldMs,
                 ReleaseMs          = ReleaseMs,
                 IsCrosshairVisible = IsCrosshairVisible,
@@ -255,19 +335,21 @@ namespace PbRecoil.ViewModels
         {
             var defaultConfig = ConfigService.GetDefaultConfig();
             ApplyConfigValues(defaultConfig);
-            StatusMessage = "↺ KONFIGURASI DI-RESET KE DEFAULT (20ms/0ms)";
+            StatusMessage = "↺ KONFIGURASI DI-RESET KE DEFAULT";
             PlayFeedbackTick(900);
         }
 
         private void ApplyConfigValues(AppConfig config)
         {
+            SelectedMode       = config.SelectedMode;
             HoldMs             = config.HoldMs;
             ReleaseMs          = config.ReleaseMs;
             IsCrosshairVisible = config.IsCrosshairVisible;
             IsOverlayActive    = config.IsOverlayActive;
 
-            _engine.HoldMs     = config.HoldMs;
-            _engine.ReleaseMs  = config.ReleaseMs;
+            _engine.CurrentMode = config.SelectedMode;
+            _engine.HoldMs      = config.HoldMs;
+            _engine.ReleaseMs   = config.ReleaseMs;
 
             RequestCrosshairVisibility?.Invoke(IsCrosshairVisible);
             RequestOverlayVisibility?.Invoke(IsOverlayActive);
@@ -288,8 +370,8 @@ namespace PbRecoil.ViewModels
 
         private static List<int> GetActiveMenuIndices()
         {
-            // 0: Hold Time, 1: Release Delay, 2: Crosshair
-            return new List<int> { 0, 1, 2 };
+            // 0: Mode Senjata, 1: Hold Time, 2: Release Delay, 3: Crosshair
+            return new List<int> { 0, 1, 2, 3 };
         }
 
         public void SelectNextSetting()
@@ -332,12 +414,22 @@ namespace PbRecoil.ViewModels
         {
             switch (SelectedSettingIndex)
             {
-                case 0: HoldMs             = StepNext(HoldMs, HoldPresets); break;
-                case 1: ReleaseMs          = StepNext(ReleaseMs, ReleasePresets); break;
-                case 2: IsCrosshairVisible = !IsCrosshairVisible; break;
+                case 0:
+                    int nextModeIdx = ((int)SelectedMode + 1) % AvailableModes.Length;
+                    SelectedMode = AvailableModes[nextModeIdx];
+                    break;
+                case 1:
+                    HoldMs = StepNext(HoldMs, HoldPresets);
+                    break;
+                case 2:
+                    ReleaseMs = StepNext(ReleaseMs, ReleasePresets);
+                    break;
+                case 3:
+                    IsCrosshairVisible = !IsCrosshairVisible;
+                    break;
             }
 
-            int pitch = (SelectedSettingIndex == 2)
+            int pitch = (SelectedSettingIndex == 3)
                 ? (IsCrosshairVisible ? 1200 : 600)
                 : 1200;
 
@@ -348,12 +440,22 @@ namespace PbRecoil.ViewModels
         {
             switch (SelectedSettingIndex)
             {
-                case 0: HoldMs             = StepPrevious(HoldMs, HoldPresets); break;
-                case 1: ReleaseMs          = StepPrevious(ReleaseMs, ReleasePresets); break;
-                case 2: IsCrosshairVisible = !IsCrosshairVisible; break;
+                case 0:
+                    int prevModeIdx = ((int)SelectedMode - 1 + AvailableModes.Length) % AvailableModes.Length;
+                    SelectedMode = AvailableModes[prevModeIdx];
+                    break;
+                case 1:
+                    HoldMs = StepPrevious(HoldMs, HoldPresets);
+                    break;
+                case 2:
+                    ReleaseMs = StepPrevious(ReleaseMs, ReleasePresets);
+                    break;
+                case 3:
+                    IsCrosshairVisible = !IsCrosshairVisible;
+                    break;
             }
 
-            int pitch = (SelectedSettingIndex == 2)
+            int pitch = (SelectedSettingIndex == 3)
                 ? (IsCrosshairVisible ? 1200 : 600)
                 : 750;
 

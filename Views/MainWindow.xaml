@@ -4,8 +4,8 @@
         xmlns:converters="clr-namespace:PbRecoil.Views"
         Title="Hexvyrr Macro — Point Blank Precision Engine"
         Icon="pack://application:,,,/Resources/app_icon.ico"
-        Width="395" Height="Auto" SizeToContent="Height"
-        MinWidth="370"
+        Width="420" Height="Auto" SizeToContent="Height"
+        MinWidth="390"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -22,23 +22,26 @@
         <converters:FiringColorConverter  x:Key="FiringColorConverter"/>
         <converters:PresetActiveBgConverter x:Key="PresetActiveBgConv"/>
         <converters:PresetActiveFgConverter x:Key="PresetActiveFgConv"/>
+        <converters:ModeActiveBgConverter   x:Key="ModeActiveBgConv"/>
+        <converters:ModeActiveFgConverter   x:Key="ModeActiveFgConv"/>
+        <converters:ModeActiveBorderConverter x:Key="ModeActiveBorderConv"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         <BooleanToVisibilityConverter     x:Key="BoolToVis"/>
 
         <!-- Cyber Action Button Style -->
         <Style x:Key="CyberActionBtn" TargetType="Button">
-            <Setter Property="Height" Value="28"/>
+            <Setter Property="Height" Value="26"/>
             <Setter Property="Background" Value="#131D2B"/>
             <Setter Property="BorderBrush" Value="#22334A"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="#C9D1D9"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="9.5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="8,2">
+                        <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="6,2">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -84,7 +87,7 @@
         </Border.Effect>
 
         <StackPanel>
-            <!-- ── TITLE BAR (Draggable & with App Logo) ────────────────── -->
+            <!-- ── TITLE BAR ────────────────────────────────────────────── -->
             <Border CornerRadius="14,14,0,0"
                     Padding="12,10,12,10"
                     Background="#141B26"
@@ -96,7 +99,6 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- App Logo Image -->
                         <Border Width="22" Height="22" CornerRadius="5" Margin="0,0,8,0" ClipToBounds="True" Background="#0C121C">
                             <Image Source="pack://application:,,,/Resources/app_logo.png" Stretch="UniformToFill"/>
                         </Border>
@@ -104,10 +106,9 @@
                         <TextBlock Text="HEXVYRR MACRO" FontWeight="Black" FontSize="13"
                                    Foreground="#00F0FF" VerticalAlignment="Center"
                                    FontFamily="Segoe UI"/>
-                        <TextBlock Text="V2" FontSize="9" FontWeight="Bold" Foreground="#00FF88" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="MULTI-WEAPON" FontSize="8.5" FontWeight="Bold" Foreground="#00FF88" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Window Control Buttons (Check Update, Minimize & Close) -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Width="24" Height="24" Margin="0,0,4,0"
                                 Background="Transparent" BorderThickness="0"
@@ -132,7 +133,6 @@
                 </Grid>
             </Border>
 
-            <!-- ── NEON DIVIDER ────────────────────────────────────────── -->
             <Rectangle Height="1" Fill="#1E2D42"/>
 
             <!-- ── MAIN CONTENT BODY ───────────────────────────────────── -->
@@ -152,7 +152,6 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Firing Pulse Dot -->
                         <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18"
                                 Background="#141E2D" BorderBrush="#25354D" BorderThickness="1"
                                 VerticalAlignment="Center" Margin="0,0,12,0">
@@ -166,16 +165,14 @@
                             </Ellipse>
                         </Border>
 
-                        <!-- Status Texts -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="{Binding StatusMessage}"
                                        FontWeight="Bold" FontSize="10.5" Foreground="#E6EDF3"
                                        TextWrapping="Wrap"/>
-                            <TextBlock Text="Hexvyrr Sequence Loop — Repeat While Holding"
-                                       FontSize="9" Foreground="#6E7681" Margin="0,2,0,0"/>
+                            <TextBlock Text="{Binding ModeName}"
+                                       FontSize="9" FontWeight="SemiBold" Foreground="#00F0FF" Margin="0,2,0,0"/>
                         </StackPanel>
 
-                        <!-- Toggle Button F1 -->
                         <Button Grid.Column="2"
                                 Content="{Binding StatusHeader}"
                                 Width="50" Height="26" Margin="8,0,0,0"
@@ -187,7 +184,7 @@
                     </Grid>
                 </Border>
 
-                <!-- ── SECTION 1: MACRO SEQUENCE VISUALIZATION ──────── -->
+                <!-- ── SECTION 1: WEAPON & QUICK CHANGE (QC) MODE SELECTION ── -->
                 <Border CornerRadius="7" Background="#0C121C" BorderBrush="#1C2738" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
                     <StackPanel>
                         <Grid Margin="0,0,0,8">
@@ -195,69 +192,142 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="⚡ MACRO TIMING SEQUENCE" FontSize="10" FontWeight="Black" Foreground="#00F0FF" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="[F3] Live HUD" FontSize="9" FontWeight="Bold" Foreground="#00FF88" VerticalAlignment="Center"/>
+                            <TextBlock Text="🎯 WEAPON &amp; QUICK CHANGE (QC) MODE" FontSize="10" FontWeight="Black" Foreground="#00F0FF" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="[F3] Live Switch" FontSize="9" FontWeight="Bold" Foreground="#00FF88" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Visual Sequence Flow -->
-                        <Border Background="#080C14" CornerRadius="6" Padding="8,6" Margin="0,0,0,8" BorderBrush="#162233" BorderThickness="1">
-                            <Grid HorizontalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <!-- Action 1: LMB Down -->
-                                    <Border Background="#5A0D1B" CornerRadius="4" Padding="6,3" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="LMB" FontWeight="Bold" FontSize="9" Foreground="#FFFFFF"/>
-                                            <TextBlock Text=" ↓" FontWeight="Black" FontSize="8" Foreground="#FF8899"/>
-                                        </StackPanel>
-                                    </Border>
+                        <!-- Group 1: Assault Rifle / SMG -->
+                        <TextBlock Text="ASSAULT / SMG" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,3"/>
+                        <Button Content="⚡ Assault / SMG No-Recoil Auto-Tap"
+                                Height="24" Margin="0,0,0,7"
+                                Command="{Binding SelectModeCommand}"
+                                CommandParameter="AssaultNoRecoil"
+                                Style="{StaticResource CyberActionBtn}"
+                                HorizontalContentAlignment="Left"
+                                Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AssaultNoRecoil}"
+                                Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AssaultNoRecoil}"
+                                BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AssaultNoRecoil}"/>
 
-                                    <!-- Delay 1 -->
-                                    <StackPanel VerticalAlignment="Center" Margin="5,0">
-                                        <TextBlock Text="{Binding HoldMs, StringFormat={}{0} ms}" FontSize="8.5" FontWeight="Bold" Foreground="#00F0FF" HorizontalAlignment="Center"/>
-                                        <Rectangle Height="1" Width="28" Fill="#00F0FF" Margin="0,1"/>
-                                    </StackPanel>
-
-                                    <!-- Action 2: LMB Up -->
-                                    <Border Background="#5A0D1B" CornerRadius="4" Padding="6,3" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="LMB" FontWeight="Bold" FontSize="9" Foreground="#FFFFFF"/>
-                                            <TextBlock Text=" ↑" FontWeight="Black" FontSize="8" Foreground="#88FF99"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Delay 2 -->
-                                    <StackPanel VerticalAlignment="Center" Margin="5,0">
-                                        <TextBlock Text="{Binding ReleaseMs, StringFormat={}{0} ms}" FontSize="8.5" FontWeight="Bold" Foreground="#00FF88" HorizontalAlignment="Center"/>
-                                        <Rectangle Height="1" Width="28" Fill="#00FF88" Margin="0,1"/>
-                                    </StackPanel>
-
-                                    <!-- Loop Icon -->
-                                    <Border Background="#162233" CornerRadius="4" Padding="5,3" VerticalAlignment="Center">
-                                        <TextBlock Text="↻ LOOP" FontSize="8" FontWeight="Black" Foreground="#8B949E"/>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Live Values Display -->
-                        <Grid Margin="0,2">
+                        <!-- Group 2: Sniper / AWP Modes -->
+                        <TextBlock Text="SNIPER / AWP (SCOPE + 3-Q-1 QUICK CHANGE)" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,3"/>
+                        <Grid Margin="0,0,0,7">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <TextBlock Text="Hold Duration: " FontSize="9.5" Foreground="#8B949E"/>
-                                <TextBlock Text="{Binding HoldMs, StringFormat={}{0} ms}" FontSize="9.5" FontWeight="Bold" Foreground="#00F0FF"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="Release Interval: " FontSize="9.5" Foreground="#8B949E"/>
-                                <TextBlock Text="{Binding ReleaseMs, StringFormat={}{0} ms}" FontSize="9.5" FontWeight="Bold" Foreground="#00FF88"/>
-                            </StackPanel>
+
+                            <Button Grid.Column="0" Content="Normal (No QC)" Margin="0,0,2,0"
+                                    Command="{Binding SelectModeCommand}" CommandParameter="AwpNormal"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AwpNormal}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AwpNormal}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AwpNormal}"/>
+
+                            <Button Grid.Column="1" Content="AWP QC 50%" Margin="2,0,2,0"
+                                    Command="{Binding SelectModeCommand}" CommandParameter="AwpQc50"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AwpQc50}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AwpQc50}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AwpQc50}"/>
+
+                            <Button Grid.Column="2" Content="AWP QC 75%" Margin="2,0,0,0"
+                                    Command="{Binding SelectModeCommand}" CommandParameter="AwpQc75"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AwpQc75}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AwpQc75}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AwpQc75}"/>
+                        </Grid>
+
+                        <!-- Group 3: Shotgun (SG) Modes -->
+                        <TextBlock Text="SHOTGUN / SG (FIRE + 3-1 QUICK CHANGE)" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,3"/>
+                        <Grid Margin="0,0,0,3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Content="Normal (No QC)" Margin="0,0,2,0"
+                                    Command="{Binding SelectModeCommand}" CommandParameter="SgNormal"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=SgNormal}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=SgNormal}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=SgNormal}"/>
+
+                            <Button Grid.Column="1" Content="SG QC 50%" Margin="2,0,2,0"
+                                    Command="{Binding SelectModeCommand}" CommandParameter="SgQc50"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=SgQc50}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=SgQc50}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=SgQc50}"/>
+
+                            <Button Grid.Column="2" Content="SG QC 75%" Margin="2,0,0,0"
+                                    Command="{Binding SelectModeCommand}" CommandParameter="SgQc75"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=SgQc75}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=SgQc75}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=SgQc75}"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- ── SECTION 2: DISPLAY & CROSSHAIR (TERPISAH) ───────── -->
+                <!-- ── SECTION 2: DYNAMIC SEQUENCE DIAGRAM (LIVE MODE) ────── -->
+                <Border CornerRadius="7" Background="#0C121C" BorderBrush="#1C2738" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="⚡ SEQUENCE TIMING DIAGRAM" FontSize="10" FontWeight="Black" Foreground="#00FF88" Margin="0,0,0,6"/>
+
+                        <!-- Visual Sequence Flow (Dynamic By Mode) -->
+                        <Border Background="#080C14" CornerRadius="6" Padding="6,6" Margin="0,0,0,4" BorderBrush="#162233" BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                
+                                <!-- Assault Mode Flow -->
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding IsAssaultMode, Converter={StaticResource BoolToVis}}">
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="5,2" VerticalAlignment="Center">
+                                        <TextBlock Text="LMB ↓" FontWeight="Bold" FontSize="8.5" Foreground="#FFFFFF"/>
+                                    </Border>
+                                    <TextBlock Text=" ➔ 20ms ➔ " FontSize="8" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center"/>
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="5,2" VerticalAlignment="Center">
+                                        <TextBlock Text="LMB ↑" FontWeight="Bold" FontSize="8.5" Foreground="#FFFFFF"/>
+                                    </Border>
+                                    <TextBlock Text=" ➔ 0ms ➔ " FontSize="8" FontWeight="Bold" Foreground="#00FF88" VerticalAlignment="Center"/>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2" VerticalAlignment="Center">
+                                        <TextBlock Text="↻ LOOP" FontSize="8" FontWeight="Black" Foreground="#8B949E"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- AWP Mode Flow -->
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding IsAwpMode, Converter={StaticResource BoolToVis}}">
+                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="RMB↓" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB↓" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#3B1435" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Q" FontSize="8" FontWeight="Bold" Foreground="#FF6BFF"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="1" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="RELEASE" FontSize="7.5" FontWeight="Bold" Foreground="#8B949E"/></Border>
+                                </StackPanel>
+
+                                <!-- SG Mode Flow -->
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding IsSgMode, Converter={StaticResource BoolToVis}}">
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB (Fire)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="2,0"/>
+                                    <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3 (Melee)" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="2,0"/>
+                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="1 (SG)" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="2,0"/>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="↻ RECOVERY" FontSize="7.5" FontWeight="Black" Foreground="#8B949E"/></Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="{Binding ModeDescription}" FontSize="9" Foreground="#8B949E" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── SECTION 3: DISPLAY & CROSSHAIR ───────────────────── -->
                 <Border CornerRadius="7" Background="#0C121C" BorderBrush="#1C2738" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
                     <StackPanel>
                         <TextBlock Text="🎯 DISPLAY &amp; CROSSHAIR" FontSize="10" FontWeight="Black" Foreground="#00FF88" Margin="0,0,0,6"/>
@@ -285,7 +355,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ── SECTION 3: CONFIG PROFILE MANAGEMENT (SAVE/LOAD/DEFAULT) ── -->
+                <!-- ── SECTION 4: CONFIG PROFILE MANAGEMENT ────────────── -->
                 <Border CornerRadius="7" Background="#0C121C" BorderBrush="#1C2738" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
                     <StackPanel>
                         <TextBlock Text="📁 CONFIG PROFILE" FontSize="10" FontWeight="Black" Foreground="#FF6BFF" Margin="0,0,0,6"/>
@@ -297,7 +367,6 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Save Config Button -->
                             <Button Grid.Column="0"
                                     Content="💾 SAVE"
                                     Margin="0,0,3,0"
@@ -305,7 +374,6 @@
                                     Style="{StaticResource CyberPrimaryBtn}"
                                     ToolTip="Simpan konfigurasi saat ini ke hexvyrr_config.json"/>
 
-                            <!-- Load Config Button -->
                             <Button Grid.Column="1"
                                     Content="📂 LOAD"
                                     Margin="3,0,3,0"
@@ -313,13 +381,12 @@
                                     Style="{StaticResource CyberActionBtn}"
                                     ToolTip="Muat konfigurasi dari hexvyrr_config.json"/>
 
-                            <!-- Default Config Button -->
                             <Button Grid.Column="2"
                                     Content="↺ DEFAULT"
                                     Margin="3,0,0,0"
                                     Command="{Binding ResetDefaultConfigCommand}"
                                     Style="{StaticResource CyberActionBtn}"
-                                    ToolTip="Kembalikan semua pengaturan ke nilai default pabrik (20ms/0ms)"/>
+                                    ToolTip="Kembalikan semua pengaturan ke nilai default pabrik"/>
                         </Grid>
                     </StackPanel>
                 </Border>

@@ -6,6 +6,7 @@ namespace PbRecoil.Core
 {
     public class AppConfig
     {
+        public MacroMode SelectedMode { get; set; } = MacroMode.AssaultNoRecoil;
         public int HoldMs { get; set; } = 20;
         public int ReleaseMs { get; set; } = 0;
         public bool IsCrosshairVisible { get; set; } = false;
@@ -51,6 +52,7 @@ namespace PbRecoil.Core
         {
             return new AppConfig
             {
+                SelectedMode       = MacroMode.AssaultNoRecoil,
                 HoldMs             = 20,
                 ReleaseMs          = 0,
                 IsCrosshairVisible = false,
