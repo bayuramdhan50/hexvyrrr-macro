@@ -205,15 +205,16 @@ namespace PbRecoil.Core
                     ExecuteAssaultCycle();
                     break;
 
-                // ── ALL SNIPER (LMB 25ms -> 3 (15ms/1ms) -> Q (15ms/1ms) -> 1 (15ms/1ms) -> LMB Up) ──
+                // ── ALL SNIPER (Konfigurasi Multi-QC Berbasis GHUB) ────────────────────────
                 case MacroMode.AllSniperNormal:
-                    ExecuteAllSniperCycle(750);
+                    ExecuteAllSniperCycle(fireMs: 30, keyHoldMs: 20, keyRelMs: 2, endRecoveryMs: 750);
                     break;
                 case MacroMode.AllSniperQc50:
-                    ExecuteAllSniperCycle(480);
+                    // Sesuai referensi gambar GHUB: 25ms LMB -> 15ms Hold -> 1ms Release -> End Delay 480ms
+                    ExecuteAllSniperCycle(fireMs: 25, keyHoldMs: 15, keyRelMs: 1, endRecoveryMs: 480);
                     break;
                 case MacroMode.AllSniperQc75:
-                    ExecuteAllSniperCycle(245);
+                    ExecuteAllSniperCycle(fireMs: 20, keyHoldMs: 10, keyRelMs: 1, endRecoveryMs: 245);
                     break;
 
                 // ── KAR (Kar98k Scope + Fire + 3-Q-1, MS timing bawaan GHUB) ──
@@ -267,39 +268,39 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode All Sniper Tahan (Sesuai Konfigurasi GHUB):
-        /// [LMB/N Down] -> 25ms -> [3 Down] -> 15ms -> [3 Up] -> 1ms ->
-        /// [Q Down] -> 15ms -> [Q Up] -> 1ms -> [1 Down] -> 15ms -> [1 Up] -> 1ms ->
-        /// [LMB/N Up] -> End Recovery Delay (750ms / 480ms / 245ms)
+        /// Mode All Sniper Tahan (Sesuai Konfigurasi GHUB Multi-QC):
+        /// [LMB/N Down] -> fireMs -> [3 Down] -> keyHoldMs -> [3 Up] -> keyRelMs ->
+        /// [Q Down] -> keyHoldMs -> [Q Up] -> keyRelMs -> [1 Down] -> keyHoldMs -> [1 Up] -> keyRelMs ->
+        /// [LMB/N Up] -> End Recovery Delay
         /// </summary>
-        private void ExecuteAllSniperCycle(int endRecoveryMs)
+        private void ExecuteAllSniperCycle(int fireMs, int keyHoldMs, int keyRelMs, int endRecoveryMs)
         {
-            // 1. Fire (LMB Down + Key N) -> Tahan selama 25ms
+            // 1. Fire (LMB Down + Key N) -> Tahan selama fireMs (default 25ms pada QC 50%)
             Win32Api.SendMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_N);
             OnRecoilTick?.Invoke();
-            PreciseSleep(25);
+            PreciseSleep(fireMs);
             if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
-            // 2. Switch ke Melee (Key 3: Tahan 15ms -> Lepas -> Jeda 1ms)
+            // 2. Switch ke Melee (Key 3: Tahan keyHoldMs -> Lepas -> Jeda keyRelMs)
             Win32Api.SendKeyDown(Win32Api.VK_3);
-            PreciseSleep(15);
+            PreciseSleep(keyHoldMs);
             Win32Api.SendKeyUp(Win32Api.VK_3);
-            PreciseSleep(1);
+            PreciseSleep(keyRelMs);
             if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
-            // 3. Quick Switch (Key Q: Tahan 15ms -> Lepas -> Jeda 1ms)
+            // 3. Quick Switch (Key Q: Tahan keyHoldMs -> Lepas -> Jeda keyRelMs)
             Win32Api.SendKeyDown(Win32Api.VK_Q);
-            PreciseSleep(15);
+            PreciseSleep(keyHoldMs);
             Win32Api.SendKeyUp(Win32Api.VK_Q);
-            PreciseSleep(1);
+            PreciseSleep(keyRelMs);
             if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
-            // 4. Switch Primary Weapon (Key 1: Tahan 15ms -> Lepas -> Jeda 1ms)
+            // 4. Switch Primary Weapon (Key 1: Tahan keyHoldMs -> Lepas -> Jeda keyRelMs)
             Win32Api.SendKeyDown(Win32Api.VK_1);
-            PreciseSleep(15);
+            PreciseSleep(keyHoldMs);
             Win32Api.SendKeyUp(Win32Api.VK_1);
-            PreciseSleep(1);
+            PreciseSleep(keyRelMs);
 
             // 5. Release Fire (LMB Up + Key N Up)
             Win32Api.SendMouseUp();
