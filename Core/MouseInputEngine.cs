@@ -207,10 +207,11 @@ namespace PbRecoil.Core
 
                 // ── ALL SNIPER (Konfigurasi Multi-QC Berbasis GHUB) ────────────────────────
                 case MacroMode.AllSniperNormal:
-                    ExecuteAllSniperCycle(fireMs: 30, keyHoldMs: 20, keyRelMs: 2, endRecoveryMs: 750);
+                    // Sesuai referensi gambar GHUB No QC (82ms R-Down -> 80ms L-Down -> 85ms 3-Down -> 75ms 1-Down -> 85ms 3-Up -> 200ms 1-Up -> 600ms R-Up -> L-Up)
+                    ExecuteSniperNoQcCycle();
                     break;
                 case MacroMode.AllSniperQc50:
-                    // Sesuai referensi gambar GHUB: 25ms LMB -> 15ms Hold -> 1ms Release -> End Delay 480ms
+                    // Sesuai referensi gambar GHUB QC 50%: 25ms LMB -> 15ms Hold -> 1ms Release -> End Delay 480ms
                     ExecuteAllSniperCycle(fireMs: 25, keyHoldMs: 15, keyRelMs: 1, endRecoveryMs: 480);
                     break;
                 case MacroMode.AllSniperQc75:
@@ -219,7 +220,7 @@ namespace PbRecoil.Core
 
                 // ── KAR (Kar98k Scope + Fire + 3-Q-1, MS timing bawaan GHUB) ──
                 case MacroMode.KarNormal:
-                    ExecuteKarCycle(890);
+                    ExecuteSniperNoQcCycle();
                     break;
                 case MacroMode.KarQc50:
                     ExecuteKarCycle(590);
@@ -243,6 +244,56 @@ namespace PbRecoil.Core
                     ExecuteAssaultCycle();
                     break;
             }
+        }
+
+        /// <summary>
+        /// Mode Sniper No QC Tahan (Sesuai Referensi Gambar GHUB):
+        /// [R-KEY Down] -> 82ms -> [L-KEY Down] -> 80ms -> [3 Down] -> 85ms -> [1 Down] -> 75ms ->
+        /// [3 Up] -> 85ms -> [1 Up] -> 200ms -> [R-KEY Up] -> 600ms -> [L-KEY Up]
+        /// </summary>
+        private void ExecuteSniperNoQcCycle()
+        {
+            // 1. R-KEY Down (Scope In RMB + Key J) -> 82ms
+            Win32Api.SendRightMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_J);
+            PreciseSleep(82);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 2. L-KEY Down (Fire LMB + Key N) -> 80ms
+            Win32Api.SendMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_N);
+            OnRecoilTick?.Invoke();
+            PreciseSleep(80);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 3. Key 3 Down (Melee) -> 85ms
+            Win32Api.SendKeyDown(Win32Api.VK_3);
+            PreciseSleep(85);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 4. Key 1 Down (Primary) -> 75ms
+            Win32Api.SendKeyDown(Win32Api.VK_1);
+            PreciseSleep(75);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 5. Key 3 Up -> 85ms
+            Win32Api.SendKeyUp(Win32Api.VK_3);
+            PreciseSleep(85);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 6. Key 1 Up -> 200ms
+            Win32Api.SendKeyUp(Win32Api.VK_1);
+            PreciseSleep(200);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 7. R-KEY Up (RMB Up + Key J Up) -> 600ms
+            Win32Api.SendRightMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_J);
+            PreciseSleep(600);
+
+            // 8. L-KEY Up (LMB Up + Key N Up)
+            Win32Api.SendMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_N);
         }
 
         /// <summary>
