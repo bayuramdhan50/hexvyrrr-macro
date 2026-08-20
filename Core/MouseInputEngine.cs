@@ -205,26 +205,26 @@ namespace PbRecoil.Core
                     ExecuteAssaultCycle();
                     break;
 
-                // ── ALL SNIPER (Scope + Fire + 3-Q-1, MS disamakan dengan SG) ──
+                // ── ALL SNIPER (LMB 25ms -> 3 (15ms/1ms) -> Q (15ms/1ms) -> 1 (15ms/1ms) -> LMB Up) ──
                 case MacroMode.AllSniperNormal:
-                    ExecuteSniperCycle(750);
+                    ExecuteAllSniperCycle(750);
                     break;
                 case MacroMode.AllSniperQc50:
-                    ExecuteSniperCycle(480);
+                    ExecuteAllSniperCycle(480);
                     break;
                 case MacroMode.AllSniperQc75:
-                    ExecuteSniperCycle(245);
+                    ExecuteAllSniperCycle(245);
                     break;
 
                 // ── KAR (Kar98k Scope + Fire + 3-Q-1, MS timing bawaan GHUB) ──
                 case MacroMode.KarNormal:
-                    ExecuteSniperCycle(890);
+                    ExecuteKarCycle(890);
                     break;
                 case MacroMode.KarQc50:
-                    ExecuteSniperCycle(590);
+                    ExecuteKarCycle(590);
                     break;
                 case MacroMode.KarQc75:
-                    ExecuteSniperCycle(300);
+                    ExecuteKarCycle(300);
                     break;
 
                 // ── SHOTGUN (Fire + 3-1 Quick Switch) ─────────────────────────
@@ -267,12 +267,55 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode Sniper / KAR Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
+        /// Mode All Sniper Tahan (Sesuai Konfigurasi GHUB):
+        /// [LMB/N Down] -> 25ms -> [3 Down] -> 15ms -> [3 Up] -> 1ms ->
+        /// [Q Down] -> 15ms -> [Q Up] -> 1ms -> [1 Down] -> 15ms -> [1 Up] -> 1ms ->
+        /// [LMB/N Up] -> End Recovery Delay (750ms / 480ms / 245ms)
+        /// </summary>
+        private void ExecuteAllSniperCycle(int endRecoveryMs)
+        {
+            // 1. Fire (LMB Down + Key N) -> Tahan selama 25ms
+            Win32Api.SendMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_N);
+            OnRecoilTick?.Invoke();
+            PreciseSleep(25);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 2. Switch ke Melee (Key 3: Tahan 15ms -> Lepas -> Jeda 1ms)
+            Win32Api.SendKeyDown(Win32Api.VK_3);
+            PreciseSleep(15);
+            Win32Api.SendKeyUp(Win32Api.VK_3);
+            PreciseSleep(1);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 3. Quick Switch (Key Q: Tahan 15ms -> Lepas -> Jeda 1ms)
+            Win32Api.SendKeyDown(Win32Api.VK_Q);
+            PreciseSleep(15);
+            Win32Api.SendKeyUp(Win32Api.VK_Q);
+            PreciseSleep(1);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 4. Switch Primary Weapon (Key 1: Tahan 15ms -> Lepas -> Jeda 1ms)
+            Win32Api.SendKeyDown(Win32Api.VK_1);
+            PreciseSleep(15);
+            Win32Api.SendKeyUp(Win32Api.VK_1);
+            PreciseSleep(1);
+
+            // 5. Release Fire (LMB Up + Key N Up)
+            Win32Api.SendMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_N);
+
+            // 6. Recovery Delay sebelum tembakan berikutnya
+            PreciseSleep(endRecoveryMs);
+        }
+
+        /// <summary>
+        /// Mode KAR (Kar98k) Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
         /// [RMB/J Down] -> 30ms Scope In -> [LMB/N Down] -> 25ms Fire -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
         /// [Q Down] -> 20ms -> [Q Up] -> 10ms -> [1 Down] -> 20ms -> [1 Up] -> 10ms ->
-        /// [RMB/J Up] [LMB/N Up] -> End Recovery Delay
+        /// [RMB/J Up] [LMB/N Up] -> End Recovery Delay (890ms / 590ms / 300ms)
         /// </summary>
-        private void ExecuteSniperCycle(int endRecoveryMs)
+        private void ExecuteKarCycle(int endRecoveryMs)
         {
             // 1. Scope In (RMB Down + Key J) -> Mengirim event mouse & hardware scancode key J
             Win32Api.SendRightMouseDown();
