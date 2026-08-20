@@ -42,6 +42,9 @@ namespace PbRecoil.Core
         private volatile bool _isPhysicalLmbDown;
         private volatile bool _isFiring;
 
+        // Stopwatch reusable — hindari alokasi object baru setiap PreciseSleep call (hot-path)
+        private readonly Stopwatch _sw = new Stopwatch();
+
         public bool IsEnabled
         {
             get => _isEnabled;
@@ -527,12 +530,13 @@ namespace PbRecoil.Core
         private void PreciseSleep(int ms)
         {
             if (ms <= 0) return;
-            var sw = Stopwatch.StartNew();
-            while (sw.ElapsedMilliseconds < ms)
+            // Reuse instance Stopwatch agar tidak membuat object baru setiap panggilan (hot-path)
+            _sw.Restart();
+            while (_sw.ElapsedMilliseconds < ms)
             {
                 if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
 
-                if (ms - sw.ElapsedMilliseconds > 2)
+                if (ms - _sw.ElapsedMilliseconds > 2)
                     Thread.Sleep(1);
                 else
                     Thread.SpinWait(15);
@@ -543,24 +547,15 @@ namespace PbRecoil.Core
         {
             Task.Run(() =>
             {
+                // Win32Api.Beep adalah native kernel32 call — lebih ringan dan tidak blocking Console I/O
                 try
                 {
                     if (enabled)
-                        Console.Beep(1000, 100);
+                        Win32Api.Beep(1000, 100);
                     else
-                        Console.Beep(450, 100);
+                        Win32Api.Beep(450, 100);
                 }
-                catch
-                {
-                    try
-                    {
-                        if (enabled)
-                            System.Media.SystemSounds.Asterisk.Play();
-                        else
-                            System.Media.SystemSounds.Hand.Play();
-                    }
-                    catch { }
-                }
+                catch { }
             });
         }
 

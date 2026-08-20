@@ -9,6 +9,16 @@ namespace PbRecoil.Core
         // ── Custom Magic Signature untuk menandai injected clicks ─────────────
         public static readonly UIntPtr INJECTED_SIGNATURE = (UIntPtr)0x50425243; // "PBRC"
 
+        // ── Cached buffers untuk hot-path (hindari heap alloc berulang) ───────
+        // IsPointBlankForeground dipanggil ribuan kali/menit dari WorkerLoop & PreciseSleep
+        private static readonly System.Text.StringBuilder _titleBuffer = new System.Text.StringBuilder(256);
+        private static readonly object _titleBufferLock = new object();
+
+        // Cache PID foreground window terakhir agar tidak terus-menerus membuka Process handle
+        private static uint   _lastFgPid;
+        private static bool   _lastPidIsGame;
+        private static IntPtr _lastFgHwnd;
+
         // ── Mouse Button Virtual Keys ──────────────────────────────────────────
         public const int VK_LBUTTON = 0x01;
         public const int VK_RBUTTON = 0x02;
@@ -200,8 +210,11 @@ namespace PbRecoil.Core
             var handle = GetForegroundWindow();
             if (handle == IntPtr.Zero) return string.Empty;
 
-            var sb = new StringBuilder(256);
-            return GetWindowText(handle, sb, 256) > 0 ? sb.ToString() : string.Empty;
+            lock (_titleBufferLock)
+            {
+                _titleBuffer.Clear();
+                return GetWindowText(handle, _titleBuffer, 256) > 0 ? _titleBuffer.ToString() : string.Empty;
+            }
         }
 
         // ── Window Positioning & Z-Order (Topmost Enforcement) ─────────────────
@@ -249,40 +262,46 @@ namespace PbRecoil.Core
             var fgHwnd = GetForegroundWindow();
             if (fgHwnd == IntPtr.Zero) return false;
 
-            // 1. Cek judul window foreground
-            var sb = new StringBuilder(256);
-            if (GetWindowText(fgHwnd, sb, 256) > 0)
+            // 1. Cek judul window foreground — reuse static buffer untuk hindari GC pressure
+            lock (_titleBufferLock)
             {
-                var title = sb.ToString();
-                if (title.StartsWith("Point Blank", StringComparison.OrdinalIgnoreCase) ||
-                    title.StartsWith("PointBlank", StringComparison.OrdinalIgnoreCase) ||
-                    title.Equals("Point Blank", StringComparison.OrdinalIgnoreCase) ||
-                    title.Equals("PointBlank", StringComparison.OrdinalIgnoreCase))
+                _titleBuffer.Clear();
+                if (GetWindowText(fgHwnd, _titleBuffer, 256) > 0)
                 {
-                    return true;
-                }
-            }
-
-            // 2. Cek nama proses window foreground
-            try
-            {
-                GetWindowThreadProcessId(fgHwnd, out uint pid);
-                if (pid > 0)
-                {
-                    using var proc = System.Diagnostics.Process.GetProcessById((int)pid);
-                    string procName = proc.ProcessName;
-                    if (procName.Equals("PointBlank", StringComparison.OrdinalIgnoreCase) ||
-                        procName.Equals("PointBlank_ID", StringComparison.OrdinalIgnoreCase) ||
-                        procName.Equals("PB", StringComparison.OrdinalIgnoreCase) ||
-                        procName.StartsWith("PointBlank", StringComparison.OrdinalIgnoreCase))
+                    var title = _titleBuffer.ToString();
+                    if (title.StartsWith("Point Blank", StringComparison.OrdinalIgnoreCase) ||
+                        title.StartsWith("PointBlank", StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }
                 }
             }
+
+            // 2. Cache PID foreground: hanya buka Process handle jika HWND berubah
+            GetWindowThreadProcessId(fgHwnd, out uint pid);
+            if (pid == 0) return false;
+
+            if (fgHwnd == _lastFgHwnd && pid == _lastFgPid)
+                return _lastPidIsGame;
+
+            bool isGame = false;
+            try
+            {
+                using var proc = System.Diagnostics.Process.GetProcessById((int)pid);
+                string procName = proc.ProcessName;
+                isGame = procName.Equals("PointBlank", StringComparison.OrdinalIgnoreCase) ||
+                         procName.Equals("PointBlank_ID", StringComparison.OrdinalIgnoreCase) ||
+                         procName.Equals("PB", StringComparison.OrdinalIgnoreCase) ||
+                         procName.StartsWith("PointBlank", StringComparison.OrdinalIgnoreCase);
+            }
             catch { }
 
-            return false;
+            // Simpan ke cache
+            _lastFgHwnd    = fgHwnd;
+            _lastFgPid     = pid;
+            _lastPidIsGame = isGame;
+
+            return isGame;
         }
 
         /// <summary>
@@ -290,18 +309,21 @@ namespace PbRecoil.Core
         /// </summary>
         public static IntPtr FindGameWindow()
         {
-            // 1. Cek Foreground Window terlebih dahulu
+            // 1. Cek Foreground Window terlebih dahulu — reuse static buffer
             var fgHwnd = GetForegroundWindow();
             if (fgHwnd != IntPtr.Zero)
             {
-                var sb = new StringBuilder(256);
-                if (GetWindowText(fgHwnd, sb, 256) > 0)
+                lock (_titleBufferLock)
                 {
-                    var title = sb.ToString();
-                    if (title.Contains("Point Blank", StringComparison.OrdinalIgnoreCase) ||
-                        title.Contains("PointBlank", StringComparison.OrdinalIgnoreCase))
+                    _titleBuffer.Clear();
+                    if (GetWindowText(fgHwnd, _titleBuffer, 256) > 0)
                     {
-                        return fgHwnd;
+                        var title = _titleBuffer.ToString();
+                        if (title.Contains("Point Blank", StringComparison.OrdinalIgnoreCase) ||
+                            title.Contains("PointBlank", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return fgHwnd;
+                        }
                     }
                 }
             }
