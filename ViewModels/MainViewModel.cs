@@ -505,13 +505,10 @@ namespace PbRecoil.ViewModels
 
         private static void PlayFeedbackTick(int pitch)
         {
+            // Win32Api.Beep adalah native kernel32 call — lebih ringan dan tidak blocking Console I/O
             Task.Run(() =>
             {
-                try
-                {
-                    Console.Beep(pitch, 25);
-                }
-                catch { }
+                try { Win32Api.Beep((uint)pitch, 25); } catch { }
             });
         }
 
