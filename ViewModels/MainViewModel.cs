@@ -93,9 +93,11 @@ namespace PbRecoil.ViewModels
                     OnPropertyChanged(nameof(ModeName));
                     OnPropertyChanged(nameof(ModeShortBadge));
                     OnPropertyChanged(nameof(ModeDescription));
-                    OnPropertyChanged(nameof(IsAssaultMode));
-                    OnPropertyChanged(nameof(IsAwpMode));
+                    OnPropertyChanged(nameof(IsNoRecoilMode));
+                    OnPropertyChanged(nameof(IsAllSniperMode));
+                    OnPropertyChanged(nameof(IsKarMode));
                     OnPropertyChanged(nameof(IsSgMode));
+                    OnPropertyChanged(nameof(IsSniperOrKarMode));
                     UpdateStatusMessage();
                 }
             }
@@ -103,43 +105,54 @@ namespace PbRecoil.ViewModels
 
         public string ModeName => SelectedMode switch
         {
-            MacroMode.AssaultNoRecoil => "ASSAULT / SMG (NO RECOIL)",
-            MacroMode.AwpNormal       => "AWP TAHAN (NO QC — 890ms)",
-            MacroMode.AwpQc50         => "AWP TAHAN (QC 50% — 590ms)",
-            MacroMode.AwpQc75         => "AWP TAHAN (QC 75% — 300ms)",
-            MacroMode.SgNormal        => "SG TAHAN (NO QC — 750ms)",
-            MacroMode.SgQc50          => "SG TAHAN (QC 50% — 480ms)",
-            MacroMode.SgQc75          => "SG TAHAN (QC 75% — 245ms)",
+            MacroMode.AssaultNoRecoil => "NO RECOIL (ASSAULT / SMG)",
+            MacroMode.AllSniperNormal => "ALL SNIPER (NO QC — 750ms)",
+            MacroMode.AllSniperQc50   => "ALL SNIPER (QC 50% — 480ms)",
+            MacroMode.AllSniperQc75   => "ALL SNIPER (QC 75% — 245ms)",
+            MacroMode.KarNormal       => "KAR98K (NO QC — 890ms)",
+            MacroMode.KarQc50         => "KAR98K (QC 50% — 590ms)",
+            MacroMode.KarQc75         => "KAR98K (QC 75% — 300ms)",
+            MacroMode.SgNormal        => "SHOTGUN (NO QC — 750ms)",
+            MacroMode.SgQc50          => "SHOTGUN (QC 50% — 480ms)",
+            MacroMode.SgQc75          => "SHOTGUN (QC 75% — 245ms)",
             _                         => "HEXVYRR MACRO"
         };
 
         public string ModeShortBadge => SelectedMode switch
         {
-            MacroMode.AssaultNoRecoil => "AR RECOIL",
-            MacroMode.AwpNormal       => "AWP NORMAL",
-            MacroMode.AwpQc50         => "AWP QC 50%",
-            MacroMode.AwpQc75         => "AWP QC 75%",
+            MacroMode.AssaultNoRecoil => "NO RECOIL",
+            MacroMode.AllSniperNormal => "SNIPER NORMAL",
+            MacroMode.AllSniperQc50   => "SNIPER 50%",
+            MacroMode.AllSniperQc75   => "SNIPER 75%",
+            MacroMode.KarNormal       => "KAR NORMAL",
+            MacroMode.KarQc50         => "KAR 50%",
+            MacroMode.KarQc75         => "KAR 75%",
             MacroMode.SgNormal        => "SG NORMAL",
-            MacroMode.SgQc50          => "SG QC 50%",
-            MacroMode.SgQc75          => "SG QC 75%",
+            MacroMode.SgQc50          => "SG 50%",
+            MacroMode.SgQc75          => "SG 75%",
             _                         => "MACRO"
         };
 
         public string ModeDescription => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "Auto-Tap ultra presisi untuk senjata Assault Rifle dan SMG.",
-            MacroMode.AwpNormal       => "Sniper AWP scope + tembak + switch 3-Q-1 otomatis tanpa QC delay.",
-            MacroMode.AwpQc50         => "Sniper AWP scope + tembak + switch 3-Q-1 dengan timing QC 50%.",
-            MacroMode.AwpQc75         => "Sniper AWP scope + tembak + switch 3-Q-1 ultra cepat (QC 75%).",
-            MacroMode.SgNormal        => "Shotgun tembak + switch 3-1 otomatis interval standar.",
-            MacroMode.SgQc50          => "Shotgun tembak + switch 3-1 otomatis dengan timing QC 50%.",
-            MacroMode.SgQc75          => "Shotgun tembak + switch 3-1 ultra cepat (QC 75%).",
+            MacroMode.AllSniperNormal => "All Sniper (CheyTac, L115A1, Tactilite, dll) Scope + Fire + 3-Q-1 interval standar.",
+            MacroMode.AllSniperQc50   => "All Sniper Scope + Fire + 3-Q-1 dengan timing QC 50% (480ms).",
+            MacroMode.AllSniperQc75   => "All Sniper Scope + Fire + 3-Q-1 ultra cepat setara SG (245ms).",
+            MacroMode.KarNormal       => "Kar98k Scope + Fire + 3-Q-1 interval standar bawaan GHUB (890ms).",
+            MacroMode.KarQc50         => "Kar98k Scope + Fire + 3-Q-1 dengan timing QC 50% bawaan GHUB (590ms).",
+            MacroMode.KarQc75         => "Kar98k Scope + Fire + 3-Q-1 ultra cepat bawaan GHUB (300ms).",
+            MacroMode.SgNormal        => "Shotgun tembak + switch 3-1 interval standar (750ms).",
+            MacroMode.SgQc50          => "Shotgun tembak + switch 3-1 dengan timing QC 50% (480ms).",
+            MacroMode.SgQc75          => "Shotgun tembak + switch 3-1 ultra cepat (245ms).",
             _                         => ""
         };
 
-        public bool IsAssaultMode => SelectedMode == MacroMode.AssaultNoRecoil;
-        public bool IsAwpMode     => SelectedMode is MacroMode.AwpNormal or MacroMode.AwpQc50 or MacroMode.AwpQc75;
-        public bool IsSgMode      => SelectedMode is MacroMode.SgNormal or MacroMode.SgQc50 or MacroMode.SgQc75;
+        public bool IsNoRecoilMode   => SelectedMode == MacroMode.AssaultNoRecoil;
+        public bool IsAllSniperMode  => SelectedMode is MacroMode.AllSniperNormal or MacroMode.AllSniperQc50 or MacroMode.AllSniperQc75;
+        public bool IsKarMode        => SelectedMode is MacroMode.KarNormal or MacroMode.KarQc50 or MacroMode.KarQc75;
+        public bool IsSgMode         => SelectedMode is MacroMode.SgNormal or MacroMode.SgQc50 or MacroMode.SgQc75;
+        public bool IsSniperOrKarMode => IsAllSniperMode || IsKarMode;
 
         public int HoldMs
         {

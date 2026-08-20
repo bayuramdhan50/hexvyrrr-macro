@@ -11,17 +11,20 @@ namespace PbRecoil.Core
     /// </summary>
     public enum MacroMode
     {
-        AssaultNoRecoil = 0, // Mode tap Klik Kiri Assault / SMG (Hold 20ms, Release 0ms)
-        AwpNormal       = 1, // AWP Tahan No QC (End Delay: 890ms)
-        AwpQc50         = 2, // AWP Tahan QC 50% (End Delay: 590ms)
-        AwpQc75         = 3, // AWP Tahan QC 75% (End Delay: 300ms)
-        SgNormal        = 4, // SG Tahan No QC (End Delay: 750ms)
-        SgQc50          = 5, // SG Tahan QC 50% (End Delay: 480ms)
-        SgQc75          = 6  // SG Tahan QC 75% (End Delay: 245ms)
+        AssaultNoRecoil = 0, // No Recoil Auto-Tap (AR / SMG)
+        AllSniperNormal = 1, // All Sniper Normal (Scope + 3-Q-1, Delay 750ms)
+        AllSniperQc50   = 2, // All Sniper QC 50% (Scope + 3-Q-1, Delay 480ms)
+        AllSniperQc75   = 3, // All Sniper QC 75% (Scope + 3-Q-1, Delay 245ms)
+        KarNormal       = 4, // Kar98k Normal (Scope + 3-Q-1, Delay 890ms)
+        KarQc50         = 5, // Kar98k QC 50% (Scope + 3-Q-1, Delay 590ms)
+        KarQc75         = 6, // Kar98k QC 75% (Scope + 3-Q-1, Delay 300ms)
+        SgNormal        = 7, // SG Normal (Fire + 3-1, Delay 750ms)
+        SgQc50          = 8, // SG QC 50% (Fire + 3-1, Delay 480ms)
+        SgQc75          = 9  // SG QC 75% (Fire + 3-1, Delay 245ms)
     }
 
     /// <summary>
-    /// Engine Hexvyrr Macro Multi-Mode untuk Point Blank (Assault, AWP, SG).
+    /// Engine Hexvyrr Macro Multi-Mode untuk Point Blank (No Recoil, All Sniper, Kar98k, SG).
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
@@ -202,26 +205,35 @@ namespace PbRecoil.Core
                     ExecuteAssaultCycle();
                     break;
 
-                case MacroMode.AwpNormal:
-                    ExecuteAwpCycle(890);
+                // ── ALL SNIPER (Scope + Fire + 3-Q-1, MS disamakan dengan SG) ──
+                case MacroMode.AllSniperNormal:
+                    ExecuteSniperCycle(750);
+                    break;
+                case MacroMode.AllSniperQc50:
+                    ExecuteSniperCycle(480);
+                    break;
+                case MacroMode.AllSniperQc75:
+                    ExecuteSniperCycle(245);
                     break;
 
-                case MacroMode.AwpQc50:
-                    ExecuteAwpCycle(590);
+                // ── KAR (Kar98k Scope + Fire + 3-Q-1, MS timing bawaan GHUB) ──
+                case MacroMode.KarNormal:
+                    ExecuteSniperCycle(890);
+                    break;
+                case MacroMode.KarQc50:
+                    ExecuteSniperCycle(590);
+                    break;
+                case MacroMode.KarQc75:
+                    ExecuteSniperCycle(300);
                     break;
 
-                case MacroMode.AwpQc75:
-                    ExecuteAwpCycle(300);
-                    break;
-
+                // ── SHOTGUN (Fire + 3-1 Quick Switch) ─────────────────────────
                 case MacroMode.SgNormal:
                     ExecuteSgCycle(750);
                     break;
-
                 case MacroMode.SgQc50:
                     ExecuteSgCycle(480);
                     break;
-
                 case MacroMode.SgQc75:
                     ExecuteSgCycle(245);
                     break;
@@ -255,39 +267,39 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode AWP Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
+        /// Mode Sniper / KAR Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
         /// [RMB/J Down] -> 30ms Scope In -> [LMB/N Down] -> 25ms Fire -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
         /// [Q Down] -> 20ms -> [Q Up] -> 10ms -> [1 Down] -> 20ms -> [1 Up] -> 10ms ->
-        /// [RMB/J Up] [LMB/N Up] -> End Recovery Delay (890ms / 590ms / 300ms)
+        /// [RMB/J Up] [LMB/N Up] -> End Recovery Delay
         /// </summary>
-        private void ExecuteAwpCycle(int endRecoveryMs)
+        private void ExecuteSniperCycle(int endRecoveryMs)
         {
             // 1. Scope In (RMB Down + Key J) -> Mengirim event mouse & hardware scancode key J
             Win32Api.SendRightMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_J);
             PreciseSleep(30);
-            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
             // 2. Fire (LMB Down + Key N) -> Tembak dalam status scoped
             Win32Api.SendMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_N);
             OnRecoilTick?.Invoke();
             PreciseSleep(25);
-            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
             // 3. Switch ke Melee (Key 3)
             Win32Api.SendKeyDown(Win32Api.VK_3);
             PreciseSleep(20);
             Win32Api.SendKeyUp(Win32Api.VK_3);
             PreciseSleep(10);
-            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
             // 4. Quick Switch (Key Q)
             Win32Api.SendKeyDown(Win32Api.VK_Q);
             PreciseSleep(20);
             Win32Api.SendKeyUp(Win32Api.VK_Q);
             PreciseSleep(10);
-            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
             // 5. Switch Primary Weapon (Key 1)
             Win32Api.SendKeyDown(Win32Api.VK_1);
