@@ -249,10 +249,12 @@ namespace PbRecoil.Core
         /// <summary>
         /// Mode Sniper No QC Tahan (Sesuai Referensi Gambar GHUB No QC):
         /// [R-KEY Down] -> 82ms -> [L-KEY Down] -> 80ms -> [3 Down] -> 85ms -> [1 Down] -> 75ms ->
-        /// [3 Up] -> 85ms -> [1 Up] -> 200ms -> [R-KEY Up] -> 600ms -> [L-KEY Up]
+        /// [3 Up] -> 85ms -> [1 Up] -> 200ms -> [R-KEY Up] [L-KEY Up] -> Recovery Delay (600ms)
         /// </summary>
         private void ExecuteSniperNoQcCycle()
         {
+            ReleaseAllInputs();
+
             // 1. R-KEY Down (Scope In RMB + Key J) -> 82ms
             Win32Api.SendRightMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_J);
@@ -286,23 +288,25 @@ namespace PbRecoil.Core
             PreciseSleep(200);
             if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
-            // 7. R-KEY Up (RMB Up + Key J Up) -> 600ms
+            // 7. Release Scope & Fire Inputs SEBELUM jeda unholster (mencegah auto-fire hipfire di PB)
             Win32Api.SendRightMouseUp();
             Win32Api.SendKeyUp(Win32Api.VK_J);
-            PreciseSleep(600);
-
-            // 8. L-KEY Up (LMB Up + Key N Up)
             Win32Api.SendMouseUp();
             Win32Api.SendKeyUp(Win32Api.VK_N);
+
+            // 8. Recovery Delay unholster sniper sampai siap ditembakkan lagi (600ms)
+            PreciseSleep(600);
         }
 
         /// <summary>
         /// Mode Sniper QC 50% Tahan (Sesuai Referensi Gambar GHUB QC 50%):
         /// [R-KEY Down] -> 40ms -> [L-KEY Down] -> 65ms -> [3 Down] -> 35ms -> [1 Down] -> 35ms ->
-        /// [3 Up] -> 35ms -> [1 Up] -> 168ms -> [R-KEY Up] -> 350ms -> [L-KEY Up]
+        /// [3 Up] -> 35ms -> [1 Up] -> 168ms -> [R-KEY Up] [L-KEY Up] -> Recovery Delay (350ms)
         /// </summary>
         private void ExecuteSniperQc50Cycle()
         {
+            ReleaseAllInputs();
+
             // 1. R-KEY Down (Scope In RMB + Key J) -> 40ms
             Win32Api.SendRightMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_J);
@@ -336,14 +340,14 @@ namespace PbRecoil.Core
             PreciseSleep(168);
             if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
-            // 7. R-KEY Up (RMB Up + Key J Up) -> 350ms
+            // 7. Release Scope & Fire Inputs SEBELUM jeda unholster (mencegah auto-fire hipfire di PB)
             Win32Api.SendRightMouseUp();
             Win32Api.SendKeyUp(Win32Api.VK_J);
-            PreciseSleep(350);
-
-            // 8. L-KEY Up (LMB Up + Key N Up)
             Win32Api.SendMouseUp();
             Win32Api.SendKeyUp(Win32Api.VK_N);
+
+            // 8. Recovery Delay unholster sniper sampai siap ditembakkan lagi (350ms)
+            PreciseSleep(350);
         }
 
         /// <summary>
@@ -376,6 +380,8 @@ namespace PbRecoil.Core
         /// </summary>
         private void ExecuteAllSniperCycle(int fireMs, int keyHoldMs, int keyRelMs, int endRecoveryMs)
         {
+            ReleaseAllInputs();
+
             // 1. Fire (LMB Down + Key N) -> Tahan selama fireMs (default 25ms pada QC 50%)
             Win32Api.SendMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_N);
@@ -419,6 +425,8 @@ namespace PbRecoil.Core
         /// </summary>
         private void ExecuteKarCycle(int endRecoveryMs)
         {
+            ReleaseAllInputs();
+
             // 1. Scope In (RMB Down + Key J) -> Mengirim event mouse & hardware scancode key J
             Win32Api.SendRightMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_J);
@@ -470,6 +478,8 @@ namespace PbRecoil.Core
         /// </summary>
         private void ExecuteSgCycle(int endRecoveryMs)
         {
+            ReleaseAllInputs();
+
             // 1. Fire (LMB/N Down -> 20ms -> LMB/N Up)
             Win32Api.SendMouseDown();
             Win32Api.SendKeyDown(Win32Api.VK_N);
