@@ -211,8 +211,8 @@ namespace PbRecoil.Core
                     ExecuteSniperNoQcCycle();
                     break;
                 case MacroMode.AllSniperQc50:
-                    // Sesuai referensi gambar GHUB QC 50%: 25ms LMB -> 15ms Hold -> 1ms Release -> End Delay 480ms
-                    ExecuteAllSniperCycle(fireMs: 25, keyHoldMs: 15, keyRelMs: 1, endRecoveryMs: 480);
+                    // Sesuai referensi gambar GHUB QC 50% (40ms R-Down -> 65ms L-Down -> 35ms 3-Down -> 35ms 1-Down -> 35ms 3-Up -> 168ms 1-Up -> 350ms R-Up -> L-Up)
+                    ExecuteSniperQc50Cycle();
                     break;
                 case MacroMode.AllSniperQc75:
                     ExecuteAllSniperCycle(fireMs: 20, keyHoldMs: 10, keyRelMs: 1, endRecoveryMs: 245);
@@ -223,7 +223,7 @@ namespace PbRecoil.Core
                     ExecuteSniperNoQcCycle();
                     break;
                 case MacroMode.KarQc50:
-                    ExecuteKarCycle(590);
+                    ExecuteSniperQc50Cycle();
                     break;
                 case MacroMode.KarQc75:
                     ExecuteKarCycle(300);
@@ -247,7 +247,7 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode Sniper No QC Tahan (Sesuai Referensi Gambar GHUB):
+        /// Mode Sniper No QC Tahan (Sesuai Referensi Gambar GHUB No QC):
         /// [R-KEY Down] -> 82ms -> [L-KEY Down] -> 80ms -> [3 Down] -> 85ms -> [1 Down] -> 75ms ->
         /// [3 Up] -> 85ms -> [1 Up] -> 200ms -> [R-KEY Up] -> 600ms -> [L-KEY Up]
         /// </summary>
@@ -290,6 +290,56 @@ namespace PbRecoil.Core
             Win32Api.SendRightMouseUp();
             Win32Api.SendKeyUp(Win32Api.VK_J);
             PreciseSleep(600);
+
+            // 8. L-KEY Up (LMB Up + Key N Up)
+            Win32Api.SendMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_N);
+        }
+
+        /// <summary>
+        /// Mode Sniper QC 50% Tahan (Sesuai Referensi Gambar GHUB QC 50%):
+        /// [R-KEY Down] -> 40ms -> [L-KEY Down] -> 65ms -> [3 Down] -> 35ms -> [1 Down] -> 35ms ->
+        /// [3 Up] -> 35ms -> [1 Up] -> 168ms -> [R-KEY Up] -> 350ms -> [L-KEY Up]
+        /// </summary>
+        private void ExecuteSniperQc50Cycle()
+        {
+            // 1. R-KEY Down (Scope In RMB + Key J) -> 40ms
+            Win32Api.SendRightMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_J);
+            PreciseSleep(40);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 2. L-KEY Down (Fire LMB + Key N) -> 65ms
+            Win32Api.SendMouseDown();
+            Win32Api.SendKeyDown(Win32Api.VK_N);
+            OnRecoilTick?.Invoke();
+            PreciseSleep(65);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 3. Key 3 Down (Melee) -> 35ms
+            Win32Api.SendKeyDown(Win32Api.VK_3);
+            PreciseSleep(35);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 4. Key 1 Down (Primary) -> 35ms
+            Win32Api.SendKeyDown(Win32Api.VK_1);
+            PreciseSleep(35);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 5. Key 3 Up -> 35ms
+            Win32Api.SendKeyUp(Win32Api.VK_3);
+            PreciseSleep(35);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 6. Key 1 Up -> 168ms
+            Win32Api.SendKeyUp(Win32Api.VK_1);
+            PreciseSleep(168);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 7. R-KEY Up (RMB Up + Key J Up) -> 350ms
+            Win32Api.SendRightMouseUp();
+            Win32Api.SendKeyUp(Win32Api.VK_J);
+            PreciseSleep(350);
 
             // 8. L-KEY Up (LMB Up + Key N Up)
             Win32Api.SendMouseUp();

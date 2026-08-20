@@ -136,11 +136,11 @@ namespace PbRecoil.ViewModels
         public string ModeDescription => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "Auto-Tap ultra presisi untuk senjata Assault Rifle dan SMG.",
-            MacroMode.AllSniperNormal => "All Sniper (CheyTac, L115A1, Tactilite, dll) Scope + Fire + 3-Q-1 interval standar.",
-            MacroMode.AllSniperQc50   => "All Sniper Scope + Fire + 3-Q-1 dengan timing QC 50% (480ms).",
-            MacroMode.AllSniperQc75   => "All Sniper Scope + Fire + 3-Q-1 ultra cepat setara SG (245ms).",
-            MacroMode.KarNormal       => "Kar98k Scope + Fire + 3-Q-1 interval standar bawaan GHUB (890ms).",
-            MacroMode.KarQc50         => "Kar98k Scope + Fire + 3-Q-1 dengan timing QC 50% bawaan GHUB (590ms).",
+            MacroMode.AllSniperNormal => "Sniper No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
+            MacroMode.AllSniperQc50   => "Sniper QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
+            MacroMode.AllSniperQc75   => "Sniper QC 75% Scope + Fire + 3-Q-1 ultra cepat (245ms).",
+            MacroMode.KarNormal       => "Kar98k No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
+            MacroMode.KarQc50         => "Kar98k QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
             MacroMode.KarQc75         => "Kar98k Scope + Fire + 3-Q-1 ultra cepat bawaan GHUB (300ms).",
             MacroMode.SgNormal        => "Shotgun tembak + switch 3-1 interval standar (750ms).",
             MacroMode.SgQc50          => "Shotgun tembak + switch 3-1 dengan timing QC 50% (480ms).",
