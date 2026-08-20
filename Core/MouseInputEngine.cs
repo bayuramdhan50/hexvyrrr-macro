@@ -295,7 +295,7 @@ namespace PbRecoil.Core
             Win32Api.SendKeyUp(Win32Api.VK_N);
 
             // 8. Recovery Delay unholster sniper sampai siap ditembakkan lagi (600ms)
-            PreciseSleep(600);
+            PreciseSleep(650);
         }
 
         /// <summary>
@@ -347,7 +347,7 @@ namespace PbRecoil.Core
             Win32Api.SendKeyUp(Win32Api.VK_N);
 
             // 8. Recovery Delay unholster sniper sampai siap ditembakkan lagi (350ms)
-            PreciseSleep(350);
+            PreciseSleep(450);
         }
 
         /// <summary>
