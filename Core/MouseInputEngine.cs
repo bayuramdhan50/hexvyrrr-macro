@@ -12,19 +12,20 @@ namespace PbRecoil.Core
     public enum MacroMode
     {
         AssaultNoRecoil = 0, // No Recoil Auto-Tap (AR / SMG)
-        AllSniperNormal = 1, // All Sniper Normal (Scope + 3-Q-1, Delay 750ms)
-        AllSniperQc50   = 2, // All Sniper QC 50% (Scope + 3-Q-1, Delay 480ms)
-        AllSniperQc75   = 3, // All Sniper QC 75% (Scope + 3-Q-1, Delay 245ms)
-        KarNormal       = 4, // Kar98k Normal (Scope + 3-Q-1, Delay 890ms)
-        KarQc50         = 5, // Kar98k QC 50% (Scope + 3-Q-1, Delay 590ms)
-        KarQc75         = 6, // Kar98k QC 75% (Scope + 3-Q-1, Delay 300ms)
-        SgNormal        = 7, // SG Normal (Fire + 3-1, Delay 750ms)
-        SgQc50          = 8, // SG QC 50% (Fire + 3-1, Delay 480ms)
-        SgQc75          = 9  // SG QC 75% (Fire + 3-1, Delay 245ms)
+        AugA3           = 1, // AUG A3 / HBAR Precision Recoil (Dynamic Pull-Down + Rapid Fire)
+        AllSniperNormal = 2, // All Sniper Normal (Scope + 3-Q-1, Delay 750ms)
+        AllSniperQc50   = 3, // All Sniper QC 50% (Scope + 3-Q-1, Delay 480ms)
+        AllSniperQc75   = 4, // All Sniper QC 75% (Scope + 3-Q-1, Delay 245ms)
+        KarNormal       = 5, // Kar98k Normal (Scope + 3-Q-1, Delay 890ms)
+        KarQc50         = 6, // Kar98k QC 50% (Scope + 3-Q-1, Delay 590ms)
+        KarQc75         = 7, // Kar98k QC 75% (Scope + 3-Q-1, Delay 300ms)
+        SgNormal        = 8, // SG Normal (Fire + 3-1, Delay 750ms)
+        SgQc50          = 9, // SG QC 50% (Fire + 3-1, Delay 480ms)
+        SgQc75          = 10 // SG QC 75% (Fire + 3-1, Delay 245ms)
     }
 
     /// <summary>
-    /// Engine Hexvyrr Macro Multi-Mode untuk Point Blank (No Recoil, All Sniper, Kar98k, SG).
+    /// Engine Hexvyrr Macro Multi-Mode untuk Point Blank (No Recoil, AUG A3, All Sniper, Kar98k, SG).
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
@@ -208,6 +209,10 @@ namespace PbRecoil.Core
                     ExecuteAssaultCycle();
                     break;
 
+                case MacroMode.AugA3:
+                    ExecuteAugCycle();
+                    break;
+
                 // ── ALL SNIPER (Konfigurasi Multi-QC Berbasis GHUB) ────────────────────────
                 case MacroMode.AllSniperNormal:
                     // Sesuai referensi gambar GHUB No QC (82ms R-Down -> 80ms L-Down -> 85ms 3-Down -> 75ms 1-Down -> 85ms 3-Up -> 200ms 1-Up -> 600ms R-Up -> L-Up)
@@ -373,6 +378,72 @@ namespace PbRecoil.Core
             {
                 PreciseSleep(releaseDuration);
             }
+        }
+
+        /// <summary>
+        /// Mode AUG A3 / HBAR Precision Recoil:
+        /// - Deteksi status Scoped (RMB aktif).
+        /// - Tahap 1 (Burst Initial Recoil): Sebanyak N tembakan (8 peluru scoped / 5 peluru hipfire),
+        ///   kirim Fire (LMB + J) 59ms, lakukan kompensasi pull-down vertikal (Y: 17 saat scoped / Y: 15 saat hipfire),
+        ///   kemudian lepas (9ms).
+        /// - Tahap 2 (Sustained Rapid Fire): Tembak terus menerus dengan interval presisi (59ms down / 9ms up).
+        /// </summary>
+        private void ExecuteAugCycle()
+        {
+            ReleaseAllInputs();
+
+            // Deteksi status Scope in-game (RMB / Right Mouse Button)
+            bool isScoped = Win32Api.IsKeyPressed(Win32Api.VK_RBUTTON);
+            int loopCount = isScoped ? 8 : 5;
+            int yValue = isScoped ? 17 : 15;
+            bool active = true;
+
+            // Tahap 1: Initial Burst dengan kompensasi recoil vertikal
+            for (int i = 0; i < loopCount; i++)
+            {
+                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
+                {
+                    active = false;
+                    break;
+                }
+
+                Win32Api.SendMouseDown();
+                Win32Api.SendKeyDown(Win32Api.VK_J);
+                OnRecoilTick?.Invoke();
+
+                PreciseSleep(59);
+                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
+                {
+                    active = false;
+                    break;
+                }
+
+                Win32Api.SendMouseMove(0, yValue);
+                Win32Api.SendMouseUp();
+                Win32Api.SendKeyUp(Win32Api.VK_J);
+
+                Win32Api.SendMouseMove(0, yValue);
+                PreciseSleep(9);
+                Win32Api.SendMouseMove(0, yValue);
+            }
+
+            // Tahap 2: Sustained Rapid Fire selama tombol tembak tetap ditahan
+            while (active && _isPhysicalLmbDown && _isEnabled && Win32Api.IsPointBlankForeground())
+            {
+                Win32Api.SendMouseDown();
+                Win32Api.SendKeyDown(Win32Api.VK_J);
+                OnRecoilTick?.Invoke();
+
+                PreciseSleep(59);
+                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
+
+                Win32Api.SendMouseUp();
+                Win32Api.SendKeyUp(Win32Api.VK_J);
+
+                PreciseSleep(9);
+            }
+
+            ReleaseAllInputs();
         }
 
         /// <summary>

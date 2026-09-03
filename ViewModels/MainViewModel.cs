@@ -94,6 +94,7 @@ namespace PbRecoil.ViewModels
                     OnPropertyChanged(nameof(ModeShortBadge));
                     OnPropertyChanged(nameof(ModeDescription));
                     OnPropertyChanged(nameof(IsNoRecoilMode));
+                    OnPropertyChanged(nameof(IsAugMode));
                     OnPropertyChanged(nameof(IsAllSniperMode));
                     OnPropertyChanged(nameof(IsKarMode));
                     OnPropertyChanged(nameof(IsSgMode));
@@ -106,6 +107,7 @@ namespace PbRecoil.ViewModels
         public string ModeName => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "NO RECOIL (ASSAULT / SMG)",
+            MacroMode.AugA3           => "AUG A3 / HBAR (DYNAMIC RECOIL)",
             MacroMode.AllSniperNormal => "ALL SNIPER (NO QC — 750ms)",
             MacroMode.AllSniperQc50   => "ALL SNIPER (QC 50% — 480ms)",
             MacroMode.AllSniperQc75   => "ALL SNIPER (QC 75% — 245ms)",
@@ -121,6 +123,7 @@ namespace PbRecoil.ViewModels
         public string ModeShortBadge => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "NO RECOIL",
+            MacroMode.AugA3           => "AUG A3",
             MacroMode.AllSniperNormal => "SNIPER NORMAL",
             MacroMode.AllSniperQc50   => "SNIPER 50%",
             MacroMode.AllSniperQc75   => "SNIPER 75%",
@@ -136,6 +139,7 @@ namespace PbRecoil.ViewModels
         public string ModeDescription => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "Auto-Tap ultra presisi untuk senjata Assault Rifle dan SMG.",
+            MacroMode.AugA3           => "Kompensasi recoil vertikal adaptif AUG (Scope Y:17 / Hipfire Y:15) + High-Speed Fire.",
             MacroMode.AllSniperNormal => "Sniper No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
             MacroMode.AllSniperQc50   => "Sniper QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
             MacroMode.AllSniperQc75   => "Sniper QC 75% Scope + Fire + 3-Q-1 ultra cepat (245ms).",
@@ -149,6 +153,7 @@ namespace PbRecoil.ViewModels
         };
 
         public bool IsNoRecoilMode   => SelectedMode == MacroMode.AssaultNoRecoil;
+        public bool IsAugMode        => SelectedMode == MacroMode.AugA3;
         public bool IsAllSniperMode  => SelectedMode is MacroMode.AllSniperNormal or MacroMode.AllSniperQc50 or MacroMode.AllSniperQc75;
         public bool IsKarMode        => SelectedMode is MacroMode.KarNormal or MacroMode.KarQc50 or MacroMode.KarQc75;
         public bool IsSgMode         => SelectedMode is MacroMode.SgNormal or MacroMode.SgQc50 or MacroMode.SgQc75;

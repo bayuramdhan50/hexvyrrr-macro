@@ -190,16 +190,34 @@
                     <StackPanel>
                         <TextBlock Text="⚡ NO RECOIL (ASSAULT / SMG)" FontSize="10" FontWeight="Black" Foreground="#00F0FF" Margin="0,0,0,6"/>
                         
-                        <Button Content="⚡ Aktifkan Mode No-Recoil Auto-Tap"
-                                Height="26" Margin="0,0,0,6"
-                                Command="{Binding SelectModeCommand}"
-                                CommandParameter="AssaultNoRecoil"
-                                Style="{StaticResource CyberActionBtn}"
-                                HorizontalContentAlignment="Center"
-                                FontWeight="Bold"
-                                Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AssaultNoRecoil}"
-                                Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AssaultNoRecoil}"
-                                BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AssaultNoRecoil}"/>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Content="⚡ Auto-Tap AR/SMG"
+                                    Height="26" Margin="0,0,2,0"
+                                    Command="{Binding SelectModeCommand}"
+                                    CommandParameter="AssaultNoRecoil"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    HorizontalContentAlignment="Center"
+                                    FontWeight="Bold"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AssaultNoRecoil}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AssaultNoRecoil}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AssaultNoRecoil}"/>
+
+                            <Button Grid.Column="1" Content="💥 AUG A3 / HBAR"
+                                    Height="26" Margin="2,0,0,0"
+                                    Command="{Binding SelectModeCommand}"
+                                    CommandParameter="AugA3"
+                                    Style="{StaticResource CyberActionBtn}"
+                                    HorizontalContentAlignment="Center"
+                                    FontWeight="Bold"
+                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AugA3}"
+                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AugA3}"
+                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AugA3}"/>
+                        </Grid>
 
                         <!-- Hold & Release Custom Timers for No-Recoil -->
                         <Grid Margin="0,2,0,0" Visibility="{Binding IsNoRecoilMode, Converter={StaticResource BoolToVis}}">
@@ -375,6 +393,17 @@
                                     <Border Background="#162233" CornerRadius="3" Padding="4,2" VerticalAlignment="Center">
                                         <TextBlock Text="↻ LOOP" FontSize="8" FontWeight="Black" Foreground="#8B949E"/>
                                     </Border>
+                                </StackPanel>
+
+                                <!-- AUG Mode Flow -->
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding IsAugMode, Converter={StaticResource BoolToVis}}">
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Fire + J (59ms)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Pull-Down (Y:15/17)" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Rel (9ms)" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
+                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="↻ ADAPTIVE SPRAY" FontSize="7.5" FontWeight="Black" Foreground="#8B949E"/></Border>
                                 </StackPanel>
 
                                 <!-- All Sniper Mode Flow -->
