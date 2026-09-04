@@ -381,54 +381,16 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode AUG A3 / HBAR Precision Recoil:
-        /// - Deteksi status Scoped (RMB aktif).
-        /// - Tahap 1 (Burst Initial Recoil): Sebanyak N tembakan (8 peluru scoped / 5 peluru hipfire),
-        ///   kirim Fire (LMB + J) 59ms, lakukan kompensasi pull-down vertikal (Y: 17 saat scoped / Y: 15 saat hipfire),
-        ///   kemudian lepas (9ms).
-        /// - Tahap 2 (Sustained Rapid Fire): Tembak terus menerus dengan interval presisi (59ms down / 9ms up).
+        /// Mode AUG A3 / HBAR:
+        /// - Rapid Fire tap presisi (59ms LMB+J down / 9ms up).
+        /// - Posisi Y stay lurus / tanpa kompensasi pull-down recoil otomatis.
         /// </summary>
         private void ExecuteAugCycle()
         {
             ReleaseAllInputs();
 
-            // Deteksi status Scope in-game (RMB / Right Mouse Button)
-            bool isScoped = Win32Api.IsKeyPressed(Win32Api.VK_RBUTTON);
-            int loopCount = isScoped ? 8 : 5;
-            int yValue = isScoped ? 17 : 15;
-            bool active = true;
-
-            // Tahap 1: Initial Burst dengan kompensasi recoil vertikal
-            for (int i = 0; i < loopCount; i++)
-            {
-                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
-                {
-                    active = false;
-                    break;
-                }
-
-                Win32Api.SendMouseDown();
-                Win32Api.SendKeyDown(Win32Api.VK_J);
-                OnRecoilTick?.Invoke();
-
-                PreciseSleep(59);
-                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
-                {
-                    active = false;
-                    break;
-                }
-
-                Win32Api.SendMouseMove(0, yValue);
-                Win32Api.SendMouseUp();
-                Win32Api.SendKeyUp(Win32Api.VK_J);
-
-                Win32Api.SendMouseMove(0, yValue);
-                PreciseSleep(9);
-                Win32Api.SendMouseMove(0, yValue);
-            }
-
-            // Tahap 2: Sustained Rapid Fire selama tombol tembak tetap ditahan
-            while (active && _isPhysicalLmbDown && _isEnabled && Win32Api.IsPointBlankForeground())
+            // Rapid fire stabil lurus (59ms down / 9ms up) tanpa pergeseran sumbu Y
+            while (_isPhysicalLmbDown && _isEnabled && Win32Api.IsPointBlankForeground())
             {
                 Win32Api.SendMouseDown();
                 Win32Api.SendKeyDown(Win32Api.VK_J);
