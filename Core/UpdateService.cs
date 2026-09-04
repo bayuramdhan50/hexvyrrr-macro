@@ -15,7 +15,7 @@ namespace PbRecoil.Core
     {
         // Ganti dengan repository publik Anda di GitHub
         private const string DefaultRepoOwner = "bayuramdhan50";
-        private const string DefaultRepoName = "hexvyrr-macro";
+        private const string DefaultRepoName = "hexvyrrr-macro";
 
         private static readonly HttpClient _httpClient = new HttpClient();
 
