@@ -15,7 +15,7 @@ namespace PbRecoil.ViewModels
         // ── Presets Kalibrasi Timing Hexvyrr Macro ──────────────────────────────
         public static readonly int[] HoldPresets    = { 5, 8, 10, 12, 15, 18, 20, 22, 25, 30, 40, 50 }; // ms (20ms = default)
         public static readonly int[] ReleasePresets = { 0, 1, 2, 4, 6, 8, 10, 12, 15, 20 };            // ms (0ms = default)
-        public static readonly int[] AugPullPresets = { 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15 };          // px (3px = default sweet spot)
+        public static readonly int[] AugPullPresets = { 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50 }; // px (3px = default sweet spot)
         public static readonly MacroMode[] AvailableModes = (MacroMode[])Enum.GetValues(typeof(MacroMode));
 
         private bool _isEngineActive = false; // Default OFF saat pertama kali dijalankan
@@ -263,7 +263,7 @@ namespace PbRecoil.ViewModels
             });
             IncreaseAugPullCommand     = new RelayCommand(_ =>
             {
-                AugPullDown = Math.Min(30, AugPullDown + 1);
+                AugPullDown = Math.Min(100, AugPullDown + 1);
                 PlayFeedbackTick(1200);
             });
             DecreaseAugPullCommand     = new RelayCommand(_ =>
