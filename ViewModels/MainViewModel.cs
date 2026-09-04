@@ -141,7 +141,7 @@ namespace PbRecoil.ViewModels
         public string ModeDescription => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "Auto-Tap ultra presisi untuk senjata Assault Rifle dan SMG.",
-            MacroMode.AugA3           => $"High-Speed Rapid Fire AUG + Smooth Pull-Down (Y: {AugPullStatusLabel}).",
+            MacroMode.AugA3           => $"AUG A3 Logitech Recoil (Burst 8/5 peluru Y:{AugPullStatusLabel} -> Sustained Spray).",
             MacroMode.AllSniperNormal => "Sniper No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
             MacroMode.AllSniperQc50   => "Sniper QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
             MacroMode.AllSniperQc75   => "Sniper QC 75% Scope + Fire + 3-Q-1 ultra cepat (245ms).",

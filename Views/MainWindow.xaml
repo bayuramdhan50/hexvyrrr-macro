@@ -317,7 +317,7 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="* 0 = Lurus (No Pull) | 1-3 px = Smooth Glide (Rekomendasi) | 4+ = Heavy Pull"
+                                <TextBlock Text="* Sesuai Logitech AUG: 8 peluru (Scope) / 5 peluru (Hipfire) dengan Smooth Pull-Down, dilanjutkan Sustained Spray stabil."
                                            FontSize="7.5" Foreground="#6E7681" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
@@ -452,11 +452,11 @@
                                 <StackPanel Orientation="Horizontal" Visibility="{Binding IsAugMode, Converter={StaticResource BoolToVis}}">
                                     <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Fire + J (59ms)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="{Binding AugPullStatusLabel, StringFormat='Pull-Y: {0}'}" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
+                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="{Binding AugPullStatusLabel, StringFormat='Burst Y: {0}'}" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
                                     <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Rel (9ms)" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="↻ SMOOTH TAP" FontSize="7.5" FontWeight="Black" Foreground="#8B949E"/></Border>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="↻ SUSTAINED SPRAY" FontSize="7.5" FontWeight="Black" Foreground="#8B949E"/></Border>
                                 </StackPanel>
 
                                 <!-- All Sniper Mode Flow -->

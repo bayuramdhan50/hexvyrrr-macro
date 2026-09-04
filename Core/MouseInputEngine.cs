@@ -381,41 +381,64 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode AUG A3 / HBAR:
-        /// - Rapid Fire tap presisi (59ms LMB+J down / 9ms up).
-        /// - Kompensasi pull-down vertikal halus (Smooth Interpolated Recoil).
-        ///   Jika AugPullDown == 0: Stay lurus tanpa pergeseran sumbu Y.
-        ///   Jika AugPullDown > 0: Nilai pull-down didistribusikan secara mikro-step selama durasi tembak (59ms),
-        ///   menghasilkan glide downward yang sangat halus tanpa hentakan mendadak.
+        /// Mode AUG A3 / HBAR (Sesuai Arsitektur Skrip Macro Logitech):
+        /// - Deteksi status Scoped in-game (RMB / Right Mouse Button).
+        /// - Tahap 1 (Initial Burst): Sebanyak N tembakan (8 peluru scoped / 5 peluru hipfire),
+        ///   kirim Fire (LMB + J) 59ms dengan kompensasi pull-down vertikal halus (Smooth Interpolated Glide),
+        ///   lalu lepas (9ms). Nilai Y dapat diatur manual oleh user (AugPullDown).
+        /// - Tahap 2 (Sustained Rapid Fire): Setelah burst awal selesai, tembakan dilanjutkan terus-menerus
+        ///   dengan interval stabil (59ms down / 9ms up) tanpa pull-down agar crosshair tidak terseret ke bawah.
         /// </summary>
         private void ExecuteAugCycle()
         {
             ReleaseAllInputs();
 
-            while (_isPhysicalLmbDown && _isEnabled && Win32Api.IsPointBlankForeground())
+            // 1. Deteksi status Scope in-game (RMB / Right Mouse Button)
+            bool isScoped = Win32Api.IsKeyPressed(Win32Api.VK_RBUTTON);
+            int loopCount = isScoped ? 8 : 5;
+
+            // Nilai pull-down berbasis konfigurasi manual user:
+            // Scoped: nilai penuh AugPullDown, Hipfire: proporsional (15/17)
+            int pullValue = isScoped
+                ? AugPullDown
+                : Math.Max(0, (int)Math.Round(AugPullDown * 15.0 / 17.0));
+
+            bool active = true;
+
+            // Tahap 1: Initial Burst (8 peluru saat scope / 5 peluru saat hipfire) dengan smooth pull-down
+            for (int i = 0; i < loopCount; i++)
             {
+                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
+                {
+                    active = false;
+                    break;
+                }
+
                 Win32Api.SendMouseDown();
                 Win32Api.SendKeyDown(Win32Api.VK_J);
                 OnRecoilTick?.Invoke();
 
-                int totalPull = AugPullDown;
-                if (totalPull <= 0)
+                if (pullValue <= 0)
                 {
                     // Stay lurus tanpa pull-down
                     PreciseSleep(59);
                 }
                 else
                 {
-                    // Kompensasi recoil mikro-step halus selama durasi tembak 59ms
+                    // Kompensasi pull-down vertikal halus secara mikro-step selama 59ms
                     const int steps = 5;
-                    const int stepDuration = 11; // 11ms * 4 = 44ms, sisa 15ms di langkah ke-5
+                    const int stepDuration = 11;
                     int movedSoFar = 0;
 
                     for (int s = 1; s <= steps; s++)
                     {
-                        if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
+                        if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
+                        {
+                            active = false;
+                            break;
+                        }
 
-                        int targetMove = (totalPull * s) / steps;
+                        int targetMove = (pullValue * s) / steps;
                         int deltaY = targetMove - movedSoFar;
                         if (deltaY > 0)
                         {
@@ -428,6 +451,26 @@ namespace PbRecoil.Core
                     }
                 }
 
+                if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground())
+                {
+                    active = false;
+                    break;
+                }
+
+                Win32Api.SendMouseUp();
+                Win32Api.SendKeyUp(Win32Api.VK_J);
+
+                PreciseSleep(9);
+            }
+
+            // Tahap 2: Sustained Rapid Fire selama tombol tembak tetap ditahan (tanpa pull-down tambahan)
+            while (active && _isPhysicalLmbDown && _isEnabled && Win32Api.IsPointBlankForeground())
+            {
+                Win32Api.SendMouseDown();
+                Win32Api.SendKeyDown(Win32Api.VK_J);
+                OnRecoilTick?.Invoke();
+
+                PreciseSleep(59);
                 if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
 
                 Win32Api.SendMouseUp();
