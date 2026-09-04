@@ -11,6 +11,8 @@ namespace PbRecoil.Core
         public string DownloadUrl { get; set; } = string.Empty;
         public string ReleasePageUrl { get; set; } = string.Empty;
         public long FileSizeBytes { get; set; }
+        public bool CheckFailed { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
 
         public string FormattedFileSize
         {

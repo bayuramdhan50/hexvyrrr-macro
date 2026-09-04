@@ -43,7 +43,7 @@ namespace PbRecoil.Views
                 try
                 {
                     string targetUrl = string.IsNullOrEmpty(_updateInfo.ReleasePageUrl)
-                        ? "https://github.com/hexvyrr/pb-recoil/releases"
+                        ? "https://github.com/bayuramdhan50/hexvyrrr-macro/releases"
                         : _updateInfo.ReleasePageUrl;
 
                     Process.Start(new ProcessStartInfo

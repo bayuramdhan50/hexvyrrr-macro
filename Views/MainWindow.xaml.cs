@@ -154,6 +154,21 @@ namespace PbRecoil.Views
             try
             {
                 var updateInfo = await _updateService.CheckForUpdatesAsync();
+
+                if (updateInfo.CheckFailed)
+                {
+                    if (isManual)
+                    {
+                        System.Windows.MessageBox.Show(
+                            $"Pemeriksaan pembaruan gagal:\n{updateInfo.ErrorMessage}\n\nPastikan koneksi internet aktif.",
+                            "Hexvyrr Macro — Pembaruan",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning
+                        );
+                    }
+                    return;
+                }
+
                 if (updateInfo.IsUpdateAvailable)
                 {
                     var dialog = new UpdateDialog(updateInfo, _updateService)

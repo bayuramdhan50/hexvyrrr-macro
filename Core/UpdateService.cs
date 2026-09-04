@@ -38,7 +38,45 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Memeriksa pembaruan versi dari GitHub Releases API.
+        /// Membersihkan string tag dan mem-parsing versi semantik secara presisi.
+        /// Menangani awalan 'v'/'V', sufiks build/prerelease ('-beta', '+build'), dsb.
+        /// </summary>
+        public static Version? ParseCleanVersion(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+            string s = raw.Trim().TrimStart('v', 'V').Trim();
+            int extraIdx = s.IndexOfAny(new[] { '-', '+' });
+            if (extraIdx >= 0) s = s.Substring(0, extraIdx);
+
+            var parts = s.Split('.');
+            var numParts = new System.Collections.Generic.List<int>();
+            foreach (var p in parts)
+            {
+                string digits = "";
+                foreach (char c in p)
+                {
+                    if (char.IsDigit(c)) digits += c;
+                    else break;
+                }
+                if (int.TryParse(digits, out int val))
+                {
+                    numParts.Add(val);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (numParts.Count == 0) return null;
+            if (numParts.Count == 1) return new Version(numParts[0], 0);
+            if (numParts.Count == 2) return new Version(numParts[0], numParts[1]);
+            if (numParts.Count == 3) return new Version(numParts[0], numParts[1], numParts[2]);
+            return new Version(numParts[0], numParts[1], numParts[2], numParts[3]);
+        }
+
+        /// <summary>
+        /// Memeriksa pembaruan versi dari GitHub Releases API secara akurat tanpa terpengaruh cache CDN.
         /// </summary>
         public async Task<UpdateInfo> CheckForUpdatesAsync(string repoOwner = DefaultRepoOwner, string repoName = DefaultRepoName)
         {
@@ -47,69 +85,136 @@ namespace PbRecoil.Core
             {
                 CurrentVersion = currentVerStr,
                 LatestVersion = currentVerStr,
-                IsUpdateAvailable = false
+                IsUpdateAvailable = false,
+                CheckFailed = false
             };
 
             try
             {
-                string apiUrl = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases/latest";
-                using var response = await _httpClient.GetAsync(apiUrl);
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                // Query 1: Mengambil daftar rilis terbaru (menghindari jeda cache CDN pada endpoint /releases/latest)
+                string listUrl = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases?per_page=15&t={timestamp}";
 
-                if (!response.IsSuccessStatusCode)
+                using var request = new HttpRequestMessage(HttpMethod.Get, listUrl);
+                request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
+                request.Headers.Add("Accept", "application/vnd.github.v3+json");
+
+                using var response = await _httpClient.SendAsync(request);
+
+                JsonDocument? doc = null;
+                JsonElement targetRelease = default;
+                bool foundValidRelease = false;
+
+                if (response.IsSuccessStatusCode)
                 {
-                    return updateInfo;
-                }
-
-                string json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                string tagName = root.TryGetProperty("tag_name", out var tagElem) ? tagElem.GetString() ?? "" : "";
-                string cleanTag = tagName.TrimStart('v', 'V').Trim();
-                string releaseNotes = root.TryGetProperty("body", out var bodyElem) ? bodyElem.GetString() ?? "" : "";
-                string releasePageUrl = root.TryGetProperty("html_url", out var htmlElem) ? htmlElem.GetString() ?? "" : "";
-
-                updateInfo.LatestVersion = cleanTag;
-                updateInfo.ReleaseNotes = string.IsNullOrWhiteSpace(releaseNotes) ? "Peningkatan performa dan stabilitas engine." : releaseNotes;
-                updateInfo.ReleasePageUrl = releasePageUrl;
-
-                // Cari link direct download binary executable (.exe) di assets
-                if (root.TryGetProperty("assets", out var assetsElem) && assetsElem.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var asset in assetsElem.EnumerateArray())
+                    string json = await response.Content.ReadAsStringAsync();
+                    doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        string name = asset.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-                        string downloadUrl = asset.TryGetProperty("browser_download_url", out var dl) ? dl.GetString() ?? "" : "";
-                        long size = asset.TryGetProperty("size", out var s) ? s.GetInt64() : 0;
-
-                        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        Version? highestFoundVer = null;
+                        foreach (var item in doc.RootElement.EnumerateArray())
                         {
-                            updateInfo.DownloadUrl = downloadUrl;
-                            updateInfo.FileSizeBytes = size;
-                            break;
+                            if (item.TryGetProperty("draft", out var isDraft) && isDraft.GetBoolean())
+                                continue;
+
+                            string tag = item.TryGetProperty("tag_name", out var t) ? t.GetString() ?? "" : "";
+                            var parsed = ParseCleanVersion(tag);
+                            if (parsed != null)
+                            {
+                                if (highestFoundVer == null || parsed > highestFoundVer)
+                                {
+                                    highestFoundVer = parsed;
+                                    targetRelease = item;
+                                    foundValidRelease = true;
+                                }
+                            }
                         }
                     }
                 }
 
-                // Jika tidak ditemukan asset .exe langsung, fallback ke direct release page
-                if (string.IsNullOrEmpty(updateInfo.DownloadUrl))
+                // Fallback jika query /releases gagal atau kosong: coba /releases/latest
+                if (!foundValidRelease)
                 {
-                    updateInfo.DownloadUrl = releasePageUrl;
+                    doc?.Dispose();
+                    string latestUrl = $"https://api.github.com/repos/{repoOwner}/{repoName}/releases/latest?t={timestamp}";
+                    using var latestReq = new HttpRequestMessage(HttpMethod.Get, latestUrl);
+                    latestReq.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
+                    latestReq.Headers.Add("Accept", "application/vnd.github.v3+json");
+
+                    using var latestResp = await _httpClient.SendAsync(latestReq);
+                    if (!latestResp.IsSuccessStatusCode)
+                    {
+                        updateInfo.CheckFailed = true;
+                        updateInfo.ErrorMessage = latestResp.StatusCode switch
+                        {
+                            System.Net.HttpStatusCode.Forbidden => "Batas akses GitHub API terlampaui (Rate Limit). Silakan coba beberapa menit lagi.",
+                            System.Net.HttpStatusCode.NotFound  => "Repositori rilis tidak ditemukan di GitHub.",
+                            _ => $"Server GitHub merespons status {(int)latestResp.StatusCode} ({latestResp.ReasonPhrase})."
+                        };
+                        return updateInfo;
+                    }
+
+                    string latestJson = await latestResp.Content.ReadAsStringAsync();
+                    doc = JsonDocument.Parse(latestJson);
+                    targetRelease = doc.RootElement;
+                    foundValidRelease = true;
                 }
 
-                // Komparasi versi
-                if (Version.TryParse(currentVerStr, out var currentVer) && Version.TryParse(cleanTag, out var latestVer))
+                using (doc)
                 {
-                    updateInfo.IsUpdateAvailable = latestVer > currentVer;
-                }
-                else
-                {
-                    updateInfo.IsUpdateAvailable = string.Compare(cleanTag, currentVerStr, StringComparison.OrdinalIgnoreCase) > 0;
+                    string tagName = targetRelease.TryGetProperty("tag_name", out var tagElem) ? tagElem.GetString() ?? "" : "";
+                    string cleanTag = tagName.TrimStart('v', 'V').Trim();
+                    string releaseNotes = targetRelease.TryGetProperty("body", out var bodyElem) ? bodyElem.GetString() ?? "" : "";
+                    string releasePageUrl = targetRelease.TryGetProperty("html_url", out var htmlElem) ? htmlElem.GetString() ?? "" : "";
+
+                    updateInfo.LatestVersion = cleanTag;
+                    updateInfo.ReleaseNotes = string.IsNullOrWhiteSpace(releaseNotes) ? "Peningkatan performa dan stabilitas engine." : releaseNotes;
+                    updateInfo.ReleasePageUrl = string.IsNullOrWhiteSpace(releasePageUrl)
+                        ? $"https://github.com/{repoOwner}/{repoName}/releases"
+                        : releasePageUrl;
+
+                    // Cari link direct download binary executable (.exe) di assets
+                    if (targetRelease.TryGetProperty("assets", out var assetsElem) && assetsElem.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var asset in assetsElem.EnumerateArray())
+                        {
+                            string name = asset.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+                            string downloadUrl = asset.TryGetProperty("browser_download_url", out var dl) ? dl.GetString() ?? "" : "";
+                            long size = asset.TryGetProperty("size", out var s) ? s.GetInt64() : 0;
+
+                            if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                            {
+                                updateInfo.DownloadUrl = downloadUrl;
+                                updateInfo.FileSizeBytes = size;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Jika tidak ditemukan asset .exe langsung, fallback ke direct release page
+                    if (string.IsNullOrEmpty(updateInfo.DownloadUrl))
+                    {
+                        updateInfo.DownloadUrl = updateInfo.ReleasePageUrl;
+                    }
+
+                    // Komparasi versi semantik akurat
+                    var currentVer = ParseCleanVersion(currentVerStr);
+                    var latestVer  = ParseCleanVersion(cleanTag);
+
+                    if (currentVer != null && latestVer != null)
+                    {
+                        updateInfo.IsUpdateAvailable = latestVer > currentVer;
+                    }
+                    else
+                    {
+                        updateInfo.IsUpdateAvailable = string.Compare(cleanTag, currentVerStr, StringComparison.OrdinalIgnoreCase) > 0;
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                updateInfo.IsUpdateAvailable = false;
+                updateInfo.CheckFailed = true;
+                updateInfo.ErrorMessage = ex.Message;
             }
 
             return updateInfo;
