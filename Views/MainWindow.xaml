@@ -333,7 +333,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="🎯 SNIPER &amp; SHOTGUN (QUICK CHANGE MACRO)" FontSize="10" FontWeight="Black" Foreground="#00FF88" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="[F3] In-Game Switch" FontSize="9" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="[F7] In-Game Switch" FontSize="9" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center"/>
                         </Grid>
 
                         <!-- Sub-Section A: WEAPON SELECTION -->
@@ -547,17 +547,17 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                            <TextBlock Text="[ F1 ]" FontWeight="Bold" FontSize="10" Foreground="#00F0FF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="[ F5 ]" FontWeight="Bold" FontSize="10" Foreground="#00F0FF" HorizontalAlignment="Center"/>
                             <TextBlock Text="Engine On/Off" FontSize="8.5" Foreground="#6E7681" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                            <TextBlock Text="[ F2 ]" FontWeight="Bold" FontSize="10" Foreground="#00FF88" HorizontalAlignment="Center"/>
+                            <TextBlock Text="[ F6 ]" FontWeight="Bold" FontSize="10" Foreground="#00FF88" HorizontalAlignment="Center"/>
                             <TextBlock Text="HUD Overlay" FontSize="8.5" Foreground="#6E7681" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                            <TextBlock Text="[ F3 ]" FontWeight="Bold" FontSize="10" Foreground="#FF6BFF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="[ F7 ]" FontWeight="Bold" FontSize="10" Foreground="#FF6BFF" HorizontalAlignment="Center"/>
                             <TextBlock Text="Config Menu" FontSize="8.5" Foreground="#6E7681" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Grid>

@@ -24,7 +24,7 @@ namespace PbRecoil.ViewModels
         private bool _isOverlayActive = true;
         private bool _isCrosshairVisible = false;
         private bool _isFiring;
-        private string _statusMessage = "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
+        private string _statusMessage = "ENGINE STANDBY — Tekan [F5] untuk aktifkan.";
 
         // ── Parameter Mode Senjata & Timing ─────────────────────────────────────
         private MacroMode _selectedMode = MacroMode.AssaultNoRecoil;
@@ -347,7 +347,7 @@ namespace PbRecoil.ViewModels
                 });
             };
 
-            // F1 — Toggle Engine ON/OFF
+            // F5 — Toggle Engine ON/OFF
             _hotkeyManager.OnToggleEngine += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(() =>
@@ -356,13 +356,13 @@ namespace PbRecoil.ViewModels
                 });
             };
 
-            // F2 — Toggle HUD Overlay
+            // F6 — Toggle HUD Overlay
             _hotkeyManager.OnToggleOverlay += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(ToggleOverlay);
             };
 
-            // F3 — Toggle Menu Pengaturan HUD
+            // F7 — Toggle Menu Pengaturan HUD
             _hotkeyManager.OnToggleSettings += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(ToggleSettingsVisibility);
@@ -520,7 +520,7 @@ namespace PbRecoil.ViewModels
             string label = IsQcWeapon ? $"{WeaponDisplayLabel} [{QcDisplayLabel}]" : ModeShortBadge;
             StatusMessage = IsEngineActive
                 ? $"[{label}] AKTIF — Tahan LMB untuk aksi."
-                : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
+                : "ENGINE STANDBY — Tekan [F5] untuk aktifkan.";
         }
 
         public void Initialize()

@@ -39,6 +39,10 @@ namespace PbRecoil.Core
         public const int VK_F2      = 0x71;
         public const int VK_F3      = 0x72;
         public const int VK_F4      = 0x73;
+        public const int VK_F5      = 0x74;
+        public const int VK_F6      = 0x75;
+        public const int VK_F7      = 0x76;
+        public const int VK_F8      = 0x77;
 
         // ── Mouse & Keyboard Event Flags ───────────────────────────────────────
         public const uint MOUSEEVENTF_MOVE      = 0x0001;

@@ -33,9 +33,9 @@ namespace PbRecoil.Core
 
         private void HotkeyLoop()
         {
-            bool wasF1 = false;
-            bool wasF2 = false;
-            bool wasF3 = false;
+            bool wasF5 = false;
+            bool wasF6 = false;
+            bool wasF7 = false;
             bool wasUp = false;
             bool wasDown = false;
             bool wasLeft = false;
@@ -43,20 +43,20 @@ namespace PbRecoil.Core
 
             while (!_isDisposed)
             {
-                // F1 — Toggle Engine ON/OFF
-                var isF1 = Win32Api.IsKeyPressed(Win32Api.VK_F1);
-                if (isF1 && !wasF1) OnToggleEngine?.Invoke();
-                wasF1 = isF1;
+                // F5 — Toggle Engine ON/OFF
+                var isF5 = Win32Api.IsKeyPressed(Win32Api.VK_F5);
+                if (isF5 && !wasF5) OnToggleEngine?.Invoke();
+                wasF5 = isF5;
 
-                // F2 — Toggle HUD Overlay on screen
-                var isF2 = Win32Api.IsKeyPressed(Win32Api.VK_F2);
-                if (isF2 && !wasF2) OnToggleOverlay?.Invoke();
-                wasF2 = isF2;
+                // F6 — Toggle HUD Overlay on screen
+                var isF6 = Win32Api.IsKeyPressed(Win32Api.VK_F6);
+                if (isF6 && !wasF6) OnToggleOverlay?.Invoke();
+                wasF6 = isF6;
 
-                // F3 — Toggle Menu Pengaturan HUD
-                var isF3 = Win32Api.IsKeyPressed(Win32Api.VK_F3);
-                if (isF3 && !wasF3) OnToggleSettings?.Invoke();
-                wasF3 = isF3;
+                // F7 — Toggle Menu Pengaturan HUD
+                var isF7 = Win32Api.IsKeyPressed(Win32Api.VK_F7);
+                if (isF7 && !wasF7) OnToggleSettings?.Invoke();
+                wasF7 = isF7;
 
                 // Tombol Panah (Arrow Keys) aktif saat menu pengaturan HUD terbuka
                 if (IsSettingsOpen)

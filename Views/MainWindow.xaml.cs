@@ -79,19 +79,19 @@ namespace PbRecoil.Views
             };
             contextMenu.Items.Add(openItem);
 
-            var toggleEngineItem = new Forms.ToolStripMenuItem("Toggle Engine (F1)", null, (s, e) =>
+            var toggleEngineItem = new Forms.ToolStripMenuItem("Toggle Engine (F5)", null, (s, e) =>
             {
                 _viewModel.IsEngineActive = !_viewModel.IsEngineActive;
             });
             contextMenu.Items.Add(toggleEngineItem);
 
-            var toggleOverlayItem = new Forms.ToolStripMenuItem("Toggle HUD Overlay (F2)", null, (s, e) =>
+            var toggleOverlayItem = new Forms.ToolStripMenuItem("Toggle HUD Overlay (F6)", null, (s, e) =>
             {
                 _viewModel.ToggleOverlay();
             });
             contextMenu.Items.Add(toggleOverlayItem);
 
-            var toggleSettingsItem = new Forms.ToolStripMenuItem("Toggle Menu Pengaturan (F3)", null, (s, e) =>
+            var toggleSettingsItem = new Forms.ToolStripMenuItem("Toggle Menu Pengaturan (F7)", null, (s, e) =>
             {
                 _viewModel.ToggleSettingsVisibility();
             });
