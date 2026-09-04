@@ -7,6 +7,28 @@ using System.Threading.Tasks;
 namespace PbRecoil.Core
 {
     /// <summary>
+    /// Kategori Senjata (Weapon Classification)
+    /// </summary>
+    public enum WeaponCategory
+    {
+        Assault,    // No Recoil Auto-Tap (AR / SMG)
+        AugA3,      // AUG A3 / HBAR Precision Recoil
+        AllSniper,  // All Sniper (CheyTac, L115A1, Tactilite, dll)
+        Kar98k,     // Kar98k Scope + Quick Switch
+        Shotgun     // Shotgun (Zombie Slayer, M1887, Cerberus, dll)
+    }
+
+    /// <summary>
+    /// Level / Tingkat Kecepatan Quick Change (QC)
+    /// </summary>
+    public enum QcLevel
+    {
+        Normal,     // Standar / No QC
+        Qc50,       // QC 50%
+        Qc75        // QC 75%
+    }
+
+    /// <summary>
     /// Kategori & Mode Senjata Hexvyrr Macro
     /// </summary>
     public enum MacroMode

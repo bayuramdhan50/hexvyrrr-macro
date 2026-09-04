@@ -78,9 +78,22 @@
 
                 <!-- Active Mode Pill & Timing Badges -->
                 <WrapPanel Margin="0,6,0,3">
-                    <!-- Mode Badge -->
-                    <Border Background="#1C2D44" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#00F0FF" BorderThickness="1">
+                    <!-- Non-QC Mode Badge (Assault / AUG) -->
+                    <Border Background="#1C2D44" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#00F0FF" BorderThickness="1"
+                            Visibility="{Binding IsQcWeapon, Converter={StaticResource InverseBoolToVis}}">
                         <TextBlock Text="{Binding ModeShortBadge}" FontSize="9" FontWeight="Black" Foreground="#00F0FF"/>
+                    </Border>
+
+                    <!-- QC Weapon Category Badge -->
+                    <Border Background="#1C2D44" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#00F0FF" BorderThickness="1"
+                            Visibility="{Binding IsQcWeapon, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding WeaponDisplayLabel}" FontSize="9" FontWeight="Black" Foreground="#00F0FF"/>
+                    </Border>
+
+                    <!-- QC Mode Badge -->
+                    <Border Background="#122E22" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#00FF88" BorderThickness="1"
+                            Visibility="{Binding IsQcWeapon, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding QcDisplayLabel}" FontSize="9" FontWeight="Black" Foreground="#00FF88"/>
                     </Border>
 
                     <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1"
@@ -149,7 +162,7 @@
                 </Grid>
 
                 <!-- ── SECTION 1: WEAPON & QC MODE ─────────────────────── -->
-                <!-- Menu Item 0: Weapon / QC Mode -->
+                <!-- Menu Item 0: Weapon -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=0}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=0}">
@@ -162,11 +175,34 @@
                         <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=0}"/>
-                        <TextBlock Grid.Column="1" Text="Weapon / QC Mode" FontSize="9.5" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="1" Text="Weapon" FontSize="9.5" FontWeight="SemiBold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="{Binding ModeShortBadge, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
+                        <TextBlock Grid.Column="2" Text="{Binding WeaponDisplayLabel, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=0}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Item 5: QC Mode (Normal / 50% / 75%) -->
+                <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
+                        Visibility="{Binding IsQcWeapon, Converter={StaticResource BoolToVis}}"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=5}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=5}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=5}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=5}"/>
+                        <TextBlock Grid.Column="1" Text="QC Mode" FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=5}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding QcDisplayLabel, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=5}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>

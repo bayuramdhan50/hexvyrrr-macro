@@ -332,101 +332,70 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="🎯 AWP &amp; SG (QUICK CHANGE MACRO)" FontSize="10" FontWeight="Black" Foreground="#00FF88" VerticalAlignment="Center"/>
+                            <TextBlock Text="🎯 SNIPER &amp; SHOTGUN (QUICK CHANGE MACRO)" FontSize="10" FontWeight="Black" Foreground="#00FF88" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1" Text="[F3] In-Game Switch" FontSize="9" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Group 1: ALL SNIPER (CheyTac, L115A1, Tactilite, dll) -->
-                        <TextBlock Text="1. ALL SNIPER (SCOPE + 3-Q-1 QUICK CHANGE)" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,3"/>
-                        <Grid Margin="0,0,0,7">
+                        <!-- Sub-Section A: WEAPON SELECTION -->
+                        <TextBlock Text="WEAPON / JENIS SENJATA:" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,4"/>
+                        <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="0" Content="Normal (No QC)" Margin="0,0,2,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="AllSniperNormal"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AllSniperNormal}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AllSniperNormal}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AllSniperNormal}"/>
+                            <Button Grid.Column="0" Content="🎯 ALL SNIPER" Height="28" Margin="0,0,2,0"
+                                    Command="{Binding SelectWeaponCommand}" CommandParameter="AllSniper"
+                                    Style="{StaticResource CyberActionBtn}" FontWeight="Bold"
+                                    Background="{Binding SelectedWeapon, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AllSniper}"
+                                    Foreground="{Binding SelectedWeapon, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AllSniper}"
+                                    BorderBrush="{Binding SelectedWeapon, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AllSniper}"/>
 
-                            <Button Grid.Column="1" Content="Sniper QC 50%" Margin="2,0,2,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="AllSniperQc50"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AllSniperQc50}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AllSniperQc50}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AllSniperQc50}"/>
+                            <Button Grid.Column="1" Content="🎯 KAR98K" Height="28" Margin="2,0,2,0"
+                                    Command="{Binding SelectWeaponCommand}" CommandParameter="Kar98k"
+                                    Style="{StaticResource CyberActionBtn}" FontWeight="Bold"
+                                    Background="{Binding SelectedWeapon, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=Kar98k}"
+                                    Foreground="{Binding SelectedWeapon, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=Kar98k}"
+                                    BorderBrush="{Binding SelectedWeapon, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=Kar98k}"/>
 
-                            <Button Grid.Column="2" Content="Sniper QC 75%" Margin="2,0,0,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="AllSniperQc75"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=AllSniperQc75}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=AllSniperQc75}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=AllSniperQc75}"/>
+                            <Button Grid.Column="2" Content="💥 SHOTGUN (SG)" Height="28" Margin="2,0,0,0"
+                                    Command="{Binding SelectWeaponCommand}" CommandParameter="Shotgun"
+                                    Style="{StaticResource CyberActionBtn}" FontWeight="Bold"
+                                    Background="{Binding SelectedWeapon, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=Shotgun}"
+                                    Foreground="{Binding SelectedWeapon, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=Shotgun}"
+                                    BorderBrush="{Binding SelectedWeapon, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=Shotgun}"/>
                         </Grid>
 
-                        <!-- Group 2: KAR (Kar98k Scope + 3-Q-1) -->
-                        <TextBlock Text="2. KAR (KAR98K SCOPE + 3-Q-1 QUICK CHANGE)" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,3"/>
-                        <Grid Margin="0,0,0,7">
+                        <!-- Sub-Section B: QC MODE SELECTION -->
+                        <TextBlock Text="QC MODE / KECEPATAN QUICK CHANGE:" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,4"/>
+                        <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="0" Content="Normal (No QC)" Margin="0,0,2,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="KarNormal"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=KarNormal}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=KarNormal}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=KarNormal}"/>
+                            <Button Grid.Column="0" Content="Normal (No QC)" Height="26" Margin="0,0,2,0"
+                                    Command="{Binding SelectQcCommand}" CommandParameter="Normal"
+                                    Style="{StaticResource CyberActionBtn}" FontWeight="SemiBold"
+                                    Background="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=Normal}"
+                                    Foreground="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=Normal}"
+                                    BorderBrush="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=Normal}"/>
 
-                            <Button Grid.Column="1" Content="Kar QC 50%" Margin="2,0,2,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="KarQc50"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=KarQc50}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=KarQc50}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=KarQc50}"/>
+                            <Button Grid.Column="1" Content="QC 50%" Height="26" Margin="2,0,2,0"
+                                    Command="{Binding SelectQcCommand}" CommandParameter="Qc50"
+                                    Style="{StaticResource CyberActionBtn}" FontWeight="SemiBold"
+                                    Background="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=Qc50}"
+                                    Foreground="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=Qc50}"
+                                    BorderBrush="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=Qc50}"/>
 
-                            <Button Grid.Column="2" Content="Kar QC 75%" Margin="2,0,0,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="KarQc75"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=KarQc75}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=KarQc75}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=KarQc75}"/>
-                        </Grid>
-
-                        <!-- Group 3: Shotgun (SG) Modes -->
-                        <TextBlock Text="3. SHOTGUN / SG (FIRE + 3-1 QUICK CHANGE)" FontSize="8.5" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,3"/>
-                        <Grid Margin="0,0,0,7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Button Grid.Column="0" Content="Normal (No QC)" Margin="0,0,2,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="SgNormal"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=SgNormal}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=SgNormal}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=SgNormal}"/>
-
-                            <Button Grid.Column="1" Content="SG QC 50%" Margin="2,0,2,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="SgQc50"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=SgQc50}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=SgQc50}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=SgQc50}"/>
-
-                            <Button Grid.Column="2" Content="SG QC 75%" Margin="2,0,0,0"
-                                    Command="{Binding SelectModeCommand}" CommandParameter="SgQc75"
-                                    Style="{StaticResource CyberActionBtn}"
-                                    Background="{Binding SelectedMode, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=SgQc75}"
-                                    Foreground="{Binding SelectedMode, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=SgQc75}"
-                                    BorderBrush="{Binding SelectedMode, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=SgQc75}"/>
+                            <Button Grid.Column="2" Content="QC 75% (Fast)" Height="26" Margin="2,0,0,0"
+                                    Command="{Binding SelectQcCommand}" CommandParameter="Qc75"
+                                    Style="{StaticResource CyberActionBtn}" FontWeight="SemiBold"
+                                    Background="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveBgConv}, ConverterParameter=Qc75}"
+                                    Foreground="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveFgConv}, ConverterParameter=Qc75}"
+                                    BorderBrush="{Binding SelectedQcLevel, Converter={StaticResource ModeActiveBorderConv}, ConverterParameter=Qc75}"/>
                         </Grid>
 
                         <!-- Visual Sequence Flow (Dynamic By Mode) -->

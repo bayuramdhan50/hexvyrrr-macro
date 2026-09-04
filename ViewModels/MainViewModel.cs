@@ -17,6 +17,8 @@ namespace PbRecoil.ViewModels
         public static readonly int[] ReleasePresets = { 0, 1, 2, 4, 6, 8, 10, 12, 15, 20 };            // ms (0ms = default)
         public static readonly int[] AugPullPresets = { 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50 }; // px (3px = default sweet spot)
         public static readonly MacroMode[] AvailableModes = (MacroMode[])Enum.GetValues(typeof(MacroMode));
+        public static readonly WeaponCategory[] AvailableWeapons = (WeaponCategory[])Enum.GetValues(typeof(WeaponCategory));
+        public static readonly QcLevel[] AvailableQcLevels = (QcLevel[])Enum.GetValues(typeof(QcLevel));
 
         private bool _isEngineActive = false; // Default OFF saat pertama kali dijalankan
         private bool _isOverlayActive = true;
@@ -26,6 +28,8 @@ namespace PbRecoil.ViewModels
 
         // ── Parameter Mode Senjata & Timing ─────────────────────────────────────
         private MacroMode _selectedMode = MacroMode.AssaultNoRecoil;
+        private WeaponCategory _selectedWeapon = WeaponCategory.Assault;
+        private QcLevel _selectedQcLevel = QcLevel.Normal;
         private int _holdMs    = 20; // Default 20ms
         private int _releaseMs = 0;  // Default 0ms
         private int _augPullDown = 3; // Default 3 px per shot
@@ -92,6 +96,7 @@ namespace PbRecoil.ViewModels
                 if (SetField(ref _selectedMode, value))
                 {
                     _engine.CurrentMode = value;
+                    SyncWeaponAndQcFromMode(value);
                     OnPropertyChanged(nameof(ModeName));
                     OnPropertyChanged(nameof(ModeShortBadge));
                     OnPropertyChanged(nameof(ModeDescription));
@@ -101,40 +106,86 @@ namespace PbRecoil.ViewModels
                     OnPropertyChanged(nameof(IsKarMode));
                     OnPropertyChanged(nameof(IsSgMode));
                     OnPropertyChanged(nameof(IsSniperOrKarMode));
+                    OnPropertyChanged(nameof(IsQcWeapon));
+                    OnPropertyChanged(nameof(SelectedWeapon));
+                    OnPropertyChanged(nameof(SelectedQcLevel));
+                    OnPropertyChanged(nameof(WeaponDisplayLabel));
+                    OnPropertyChanged(nameof(QcDisplayLabel));
                     UpdateStatusMessage();
                 }
             }
         }
 
-        public string ModeName => SelectedMode switch
+        public WeaponCategory SelectedWeapon
         {
-            MacroMode.AssaultNoRecoil => "NO RECOIL (ASSAULT / SMG)",
-            MacroMode.AugA3           => "AUG A3 / HBAR (DYNAMIC RECOIL)",
-            MacroMode.AllSniperNormal => "ALL SNIPER (NO QC — 750ms)",
-            MacroMode.AllSniperQc50   => "ALL SNIPER (QC 50% — 480ms)",
-            MacroMode.AllSniperQc75   => "ALL SNIPER (QC 75% — 245ms)",
-            MacroMode.KarNormal       => "KAR98K (NO QC — 890ms)",
-            MacroMode.KarQc50         => "KAR98K (QC 50% — 590ms)",
-            MacroMode.KarQc75         => "KAR98K (QC 75% — 300ms)",
-            MacroMode.SgNormal        => "SHOTGUN (NO QC — 750ms)",
-            MacroMode.SgQc50          => "SHOTGUN (QC 50% — 480ms)",
-            MacroMode.SgQc75          => "SHOTGUN (QC 75% — 245ms)",
-            _                         => "HEXVYRR MACRO"
+            get => _selectedWeapon;
+            set
+            {
+                if (SetField(ref _selectedWeapon, value))
+                {
+                    SyncModeFromWeaponAndQc();
+                    OnPropertyChanged(nameof(WeaponDisplayLabel));
+                    OnPropertyChanged(nameof(IsQcWeapon));
+                    ValidateSelectedSettingIndex();
+                }
+            }
+        }
+
+        public QcLevel SelectedQcLevel
+        {
+            get => _selectedQcLevel;
+            set
+            {
+                if (SetField(ref _selectedQcLevel, value))
+                {
+                    SyncModeFromWeaponAndQc();
+                    OnPropertyChanged(nameof(QcDisplayLabel));
+                }
+            }
+        }
+
+        public bool IsQcWeapon => SelectedWeapon is WeaponCategory.AllSniper or WeaponCategory.Kar98k or WeaponCategory.Shotgun;
+
+        public string WeaponDisplayLabel => SelectedWeapon switch
+        {
+            WeaponCategory.Assault   => "ASSAULT / SMG",
+            WeaponCategory.AugA3     => "AUG A3",
+            WeaponCategory.AllSniper => "ALL SNIPER",
+            WeaponCategory.Kar98k    => "KAR98K",
+            WeaponCategory.Shotgun   => "SHOTGUN",
+            _                        => "WEAPON"
         };
+
+        public string QcDisplayLabel => SelectedQcLevel switch
+        {
+            QcLevel.Normal => "NORMAL (NO QC)",
+            QcLevel.Qc50   => "QC 50%",
+            QcLevel.Qc75   => "QC 75%",
+            _              => "NORMAL"
+        };
+
+        public string ModeName => IsQcWeapon
+            ? $"{WeaponDisplayLabel} — {QcDisplayLabel}"
+            : SelectedMode switch
+            {
+                MacroMode.AssaultNoRecoil => "NO RECOIL (ASSAULT / SMG)",
+                MacroMode.AugA3           => "AUG A3 / HBAR (DYNAMIC RECOIL)",
+                _                         => "HEXVYRR MACRO"
+            };
 
         public string ModeShortBadge => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "NO RECOIL",
             MacroMode.AugA3           => "AUG A3",
-            MacroMode.AllSniperNormal => "SNIPER NORMAL",
-            MacroMode.AllSniperQc50   => "SNIPER 50%",
-            MacroMode.AllSniperQc75   => "SNIPER 75%",
-            MacroMode.KarNormal       => "KAR NORMAL",
-            MacroMode.KarQc50         => "KAR 50%",
-            MacroMode.KarQc75         => "KAR 75%",
-            MacroMode.SgNormal        => "SG NORMAL",
-            MacroMode.SgQc50          => "SG 50%",
-            MacroMode.SgQc75          => "SG 75%",
+            MacroMode.AllSniperNormal => "SNIPER [NORMAL]",
+            MacroMode.AllSniperQc50   => "SNIPER [50%]",
+            MacroMode.AllSniperQc75   => "SNIPER [75%]",
+            MacroMode.KarNormal       => "KAR [NORMAL]",
+            MacroMode.KarQc50         => "KAR [50%]",
+            MacroMode.KarQc75         => "KAR [75%]",
+            MacroMode.SgNormal        => "SG [NORMAL]",
+            MacroMode.SgQc50          => "SG [50%]",
+            MacroMode.SgQc75          => "SG [75%]",
             _                         => "MACRO"
         };
 
@@ -228,6 +279,8 @@ namespace PbRecoil.ViewModels
         public ICommand ToggleSettingsCommand { get; }
         public ICommand ToggleCrosshairCommand { get; }
         public ICommand SelectModeCommand { get; }
+        public ICommand SelectWeaponCommand { get; }
+        public ICommand SelectQcCommand { get; }
         public ICommand SaveConfigCommand { get; }
         public ICommand LoadConfigCommand { get; }
         public ICommand ResetDefaultConfigCommand { get; }
@@ -247,6 +300,8 @@ namespace PbRecoil.ViewModels
             ToggleSettingsCommand      = new RelayCommand(_ => ToggleSettingsVisibility());
             ToggleCrosshairCommand     = new RelayCommand(_ => IsCrosshairVisible = !IsCrosshairVisible);
             SelectModeCommand          = new RelayCommand(param => SetModeFromParam(param));
+            SelectWeaponCommand        = new RelayCommand(param => SetWeaponFromParam(param));
+            SelectQcCommand            = new RelayCommand(param => SetQcFromParam(param));
             SaveConfigCommand          = new RelayCommand(_ => SaveConfig());
             LoadConfigCommand          = new RelayCommand(_ => LoadConfig());
             ResetDefaultConfigCommand  = new RelayCommand(_ => ResetDefaultConfig());
@@ -350,10 +405,121 @@ namespace PbRecoil.ViewModels
             }
         }
 
+        private void SetWeaponFromParam(object? param)
+        {
+            if (param is WeaponCategory wep)
+            {
+                SelectedWeapon = wep;
+                PlayFeedbackTick(1100);
+            }
+            else if (param is string str && Enum.TryParse<WeaponCategory>(str, out var parsedWep))
+            {
+                SelectedWeapon = parsedWep;
+                PlayFeedbackTick(1100);
+            }
+        }
+
+        private void SetQcFromParam(object? param)
+        {
+            QcLevel? targetQc = null;
+            if (param is QcLevel qc)
+            {
+                targetQc = qc;
+            }
+            else if (param is string str && Enum.TryParse<QcLevel>(str, out var parsedQc))
+            {
+                targetQc = parsedQc;
+            }
+
+            if (targetQc.HasValue)
+            {
+                if (!IsQcWeapon)
+                {
+                    _selectedWeapon = WeaponCategory.AllSniper;
+                    OnPropertyChanged(nameof(SelectedWeapon));
+                    OnPropertyChanged(nameof(WeaponDisplayLabel));
+                    OnPropertyChanged(nameof(IsQcWeapon));
+                }
+                SelectedQcLevel = targetQc.Value;
+                PlayFeedbackTick(1100);
+            }
+        }
+
+        private void SyncModeFromWeaponAndQc()
+        {
+            MacroMode targetMode = _selectedWeapon switch
+            {
+                WeaponCategory.Assault   => MacroMode.AssaultNoRecoil,
+                WeaponCategory.AugA3     => MacroMode.AugA3,
+                WeaponCategory.AllSniper => _selectedQcLevel switch
+                {
+                    QcLevel.Normal => MacroMode.AllSniperNormal,
+                    QcLevel.Qc50   => MacroMode.AllSniperQc50,
+                    QcLevel.Qc75   => MacroMode.AllSniperQc75,
+                    _              => MacroMode.AllSniperNormal
+                },
+                WeaponCategory.Kar98k => _selectedQcLevel switch
+                {
+                    QcLevel.Normal => MacroMode.KarNormal,
+                    QcLevel.Qc50   => MacroMode.KarQc50,
+                    QcLevel.Qc75   => MacroMode.KarQc75,
+                    _              => MacroMode.KarNormal
+                },
+                WeaponCategory.Shotgun => _selectedQcLevel switch
+                {
+                    QcLevel.Normal => MacroMode.SgNormal,
+                    QcLevel.Qc50   => MacroMode.SgQc50,
+                    QcLevel.Qc75   => MacroMode.SgQc75,
+                    _              => MacroMode.SgNormal
+                },
+                _ => MacroMode.AssaultNoRecoil
+            };
+
+            if (SelectedMode != targetMode)
+            {
+                SelectedMode = targetMode;
+            }
+        }
+
+        private void SyncWeaponAndQcFromMode(MacroMode mode)
+        {
+            var (weapon, qc) = mode switch
+            {
+                MacroMode.AssaultNoRecoil => (WeaponCategory.Assault, QcLevel.Normal),
+                MacroMode.AugA3           => (WeaponCategory.AugA3, QcLevel.Normal),
+                MacroMode.AllSniperNormal => (WeaponCategory.AllSniper, QcLevel.Normal),
+                MacroMode.AllSniperQc50   => (WeaponCategory.AllSniper, QcLevel.Qc50),
+                MacroMode.AllSniperQc75   => (WeaponCategory.AllSniper, QcLevel.Qc75),
+                MacroMode.KarNormal       => (WeaponCategory.Kar98k, QcLevel.Normal),
+                MacroMode.KarQc50         => (WeaponCategory.Kar98k, QcLevel.Qc50),
+                MacroMode.KarQc75         => (WeaponCategory.Kar98k, QcLevel.Qc75),
+                MacroMode.SgNormal        => (WeaponCategory.Shotgun, QcLevel.Normal),
+                MacroMode.SgQc50          => (WeaponCategory.Shotgun, QcLevel.Qc50),
+                MacroMode.SgQc75          => (WeaponCategory.Shotgun, QcLevel.Qc75),
+                _                         => (WeaponCategory.Assault, QcLevel.Normal)
+            };
+
+            if (_selectedWeapon != weapon)
+            {
+                _selectedWeapon = weapon;
+                OnPropertyChanged(nameof(SelectedWeapon));
+                OnPropertyChanged(nameof(WeaponDisplayLabel));
+                OnPropertyChanged(nameof(IsQcWeapon));
+            }
+
+            if (IsQcWeapon && _selectedQcLevel != qc)
+            {
+                _selectedQcLevel = qc;
+                OnPropertyChanged(nameof(SelectedQcLevel));
+                OnPropertyChanged(nameof(QcDisplayLabel));
+            }
+        }
+
         private void UpdateStatusMessage()
         {
+            string label = IsQcWeapon ? $"{WeaponDisplayLabel} [{QcDisplayLabel}]" : ModeShortBadge;
             StatusMessage = IsEngineActive
-                ? $"[{ModeShortBadge}] AKTIF — Tahan LMB untuk aksi."
+                ? $"[{label}] AKTIF — Tahan LMB untuk aksi."
                 : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
         }
 
@@ -435,13 +601,38 @@ namespace PbRecoil.ViewModels
 
         private List<int> GetActiveMenuIndices()
         {
-            if (SelectedMode == MacroMode.AugA3)
+            // 0: Weapon
+            var list = new List<int> { 0 };
+
+            if (IsQcWeapon)
             {
-                // 0: Mode Senjata, 4: Smooth Pull-Down, 3: Crosshair
-                return new List<int> { 0, 4, 3 };
+                // 5: QC Mode (Normal / 50% / 75%)
+                list.Add(5);
             }
-            // 0: Mode Senjata, 1: Hold Time, 2: Release Delay, 3: Crosshair
-            return new List<int> { 0, 1, 2, 3 };
+            else if (IsAugMode)
+            {
+                // 4: Smooth Pull-Down Y
+                list.Add(4);
+            }
+            else if (IsNoRecoilMode)
+            {
+                // 1: Hold Time, 2: Release Delay
+                list.Add(1);
+                list.Add(2);
+            }
+
+            // 3: Crosshair Dot
+            list.Add(3);
+            return list;
+        }
+
+        private void ValidateSelectedSettingIndex()
+        {
+            var activeIndices = GetActiveMenuIndices();
+            if (!activeIndices.Contains(SelectedSettingIndex))
+            {
+                SelectedSettingIndex = activeIndices[0];
+            }
         }
 
         public void SelectNextSetting()
@@ -485,8 +676,8 @@ namespace PbRecoil.ViewModels
             switch (SelectedSettingIndex)
             {
                 case 0:
-                    int nextModeIdx = ((int)SelectedMode + 1) % AvailableModes.Length;
-                    SelectedMode = AvailableModes[nextModeIdx];
+                    int nextWepIdx = ((int)SelectedWeapon + 1) % AvailableWeapons.Length;
+                    SelectedWeapon = AvailableWeapons[nextWepIdx];
                     break;
                 case 1:
                     HoldMs = StepNext(HoldMs, HoldPresets);
@@ -500,11 +691,15 @@ namespace PbRecoil.ViewModels
                 case 4:
                     AugPullDown = StepNext(AugPullDown, AugPullPresets);
                     break;
+                case 5:
+                    int nextQcIdx = ((int)SelectedQcLevel + 1) % AvailableQcLevels.Length;
+                    SelectedQcLevel = AvailableQcLevels[nextQcIdx];
+                    break;
             }
 
             int pitch = (SelectedSettingIndex == 3)
                 ? (IsCrosshairVisible ? 1200 : 600)
-                : 1200;
+                : 1100;
 
             PlayFeedbackTick(pitch);
         }
@@ -514,8 +709,8 @@ namespace PbRecoil.ViewModels
             switch (SelectedSettingIndex)
             {
                 case 0:
-                    int prevModeIdx = ((int)SelectedMode - 1 + AvailableModes.Length) % AvailableModes.Length;
-                    SelectedMode = AvailableModes[prevModeIdx];
+                    int prevWepIdx = ((int)SelectedWeapon - 1 + AvailableWeapons.Length) % AvailableWeapons.Length;
+                    SelectedWeapon = AvailableWeapons[prevWepIdx];
                     break;
                 case 1:
                     HoldMs = StepPrevious(HoldMs, HoldPresets);
@@ -528,6 +723,10 @@ namespace PbRecoil.ViewModels
                     break;
                 case 4:
                     AugPullDown = StepPrevious(AugPullDown, AugPullPresets);
+                    break;
+                case 5:
+                    int prevQcIdx = ((int)SelectedQcLevel - 1 + AvailableQcLevels.Length) % AvailableQcLevels.Length;
+                    SelectedQcLevel = AvailableQcLevels[prevQcIdx];
                     break;
             }
 
