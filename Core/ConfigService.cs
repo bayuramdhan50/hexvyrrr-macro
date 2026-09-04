@@ -9,6 +9,7 @@ namespace PbRecoil.Core
         public MacroMode SelectedMode { get; set; } = MacroMode.AssaultNoRecoil;
         public int HoldMs { get; set; } = 20;
         public int ReleaseMs { get; set; } = 0;
+        public int AugPullDown { get; set; } = 3;
         public bool IsCrosshairVisible { get; set; } = false;
         public bool IsOverlayActive { get; set; } = true;
     }
@@ -55,6 +56,7 @@ namespace PbRecoil.Core
                 SelectedMode       = MacroMode.AssaultNoRecoil,
                 HoldMs             = 20,
                 ReleaseMs          = 0,
+                AugPullDown        = 3,
                 IsCrosshairVisible = false,
                 IsOverlayActive    = true
             };

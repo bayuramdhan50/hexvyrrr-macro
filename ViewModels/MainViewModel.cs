@@ -15,6 +15,7 @@ namespace PbRecoil.ViewModels
         // ── Presets Kalibrasi Timing Hexvyrr Macro ──────────────────────────────
         public static readonly int[] HoldPresets    = { 5, 8, 10, 12, 15, 18, 20, 22, 25, 30, 40, 50 }; // ms (20ms = default)
         public static readonly int[] ReleasePresets = { 0, 1, 2, 4, 6, 8, 10, 12, 15, 20 };            // ms (0ms = default)
+        public static readonly int[] AugPullPresets = { 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15 };          // px (3px = default sweet spot)
         public static readonly MacroMode[] AvailableModes = (MacroMode[])Enum.GetValues(typeof(MacroMode));
 
         private bool _isEngineActive = false; // Default OFF saat pertama kali dijalankan
@@ -27,6 +28,7 @@ namespace PbRecoil.ViewModels
         private MacroMode _selectedMode = MacroMode.AssaultNoRecoil;
         private int _holdMs    = 20; // Default 20ms
         private int _releaseMs = 0;  // Default 0ms
+        private int _augPullDown = 3; // Default 3 px per shot
 
         // ── HUD Settings Navigation State ──────────────────────────────────────
         private bool _isSettingsVisible = false;
@@ -139,7 +141,7 @@ namespace PbRecoil.ViewModels
         public string ModeDescription => SelectedMode switch
         {
             MacroMode.AssaultNoRecoil => "Auto-Tap ultra presisi untuk senjata Assault Rifle dan SMG.",
-            MacroMode.AugA3           => "High-Speed Rapid Fire AUG presisi (Stay lurus tanpa kompensasi pull-down).",
+            MacroMode.AugA3           => $"High-Speed Rapid Fire AUG + Smooth Pull-Down (Y: {AugPullStatusLabel}).",
             MacroMode.AllSniperNormal => "Sniper No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
             MacroMode.AllSniperQc50   => "Sniper QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
             MacroMode.AllSniperQc75   => "Sniper QC 75% Scope + Fire + 3-Q-1 ultra cepat (245ms).",
@@ -183,6 +185,22 @@ namespace PbRecoil.ViewModels
             }
         }
 
+        public int AugPullDown
+        {
+            get => _augPullDown;
+            set
+            {
+                if (SetField(ref _augPullDown, value))
+                {
+                    _engine.AugPullDown = value;
+                    OnPropertyChanged(nameof(AugPullStatusLabel));
+                    if (IsAugMode) OnPropertyChanged(nameof(ModeDescription));
+                }
+            }
+        }
+
+        public string AugPullStatusLabel => AugPullDown <= 0 ? "0 px (Off)" : $"{AugPullDown} px (Smooth)";
+
         public bool IsSettingsVisible
         {
             get => _isSettingsVisible;
@@ -213,6 +231,11 @@ namespace PbRecoil.ViewModels
         public ICommand SaveConfigCommand { get; }
         public ICommand LoadConfigCommand { get; }
         public ICommand ResetDefaultConfigCommand { get; }
+        public ICommand SetHoldMsCommand { get; }
+        public ICommand SetReleaseMsCommand { get; }
+        public ICommand SetAugPullCommand { get; }
+        public ICommand IncreaseAugPullCommand { get; }
+        public ICommand DecreaseAugPullCommand { get; }
 
         public MainViewModel()
         {
@@ -227,6 +250,27 @@ namespace PbRecoil.ViewModels
             SaveConfigCommand          = new RelayCommand(_ => SaveConfig());
             LoadConfigCommand          = new RelayCommand(_ => LoadConfig());
             ResetDefaultConfigCommand  = new RelayCommand(_ => ResetDefaultConfig());
+
+            SetHoldMsCommand           = new RelayCommand(p => { if (p != null && int.TryParse(p.ToString(), out int v)) HoldMs = v; });
+            SetReleaseMsCommand        = new RelayCommand(p => { if (p != null && int.TryParse(p.ToString(), out int v)) ReleaseMs = v; });
+            SetAugPullCommand          = new RelayCommand(p =>
+            {
+                if (p != null && int.TryParse(p.ToString(), out int v))
+                {
+                    AugPullDown = v;
+                    PlayFeedbackTick(1100);
+                }
+            });
+            IncreaseAugPullCommand     = new RelayCommand(_ =>
+            {
+                AugPullDown = Math.Min(30, AugPullDown + 1);
+                PlayFeedbackTick(1200);
+            });
+            DecreaseAugPullCommand     = new RelayCommand(_ =>
+            {
+                AugPullDown = Math.Max(0, AugPullDown - 1);
+                PlayFeedbackTick(750);
+            });
 
             // Sync state dari engine ke ViewModel
             _engine.OnStateChanged += state =>
@@ -329,6 +373,7 @@ namespace PbRecoil.ViewModels
                 SelectedMode       = SelectedMode,
                 HoldMs             = HoldMs,
                 ReleaseMs          = ReleaseMs,
+                AugPullDown        = AugPullDown,
                 IsCrosshairVisible = IsCrosshairVisible,
                 IsOverlayActive    = IsOverlayActive
             };
@@ -362,12 +407,14 @@ namespace PbRecoil.ViewModels
             SelectedMode       = config.SelectedMode;
             HoldMs             = config.HoldMs;
             ReleaseMs          = config.ReleaseMs;
+            AugPullDown        = config.AugPullDown;
             IsCrosshairVisible = config.IsCrosshairVisible;
             IsOverlayActive    = config.IsOverlayActive;
 
             _engine.CurrentMode = config.SelectedMode;
             _engine.HoldMs      = config.HoldMs;
             _engine.ReleaseMs   = config.ReleaseMs;
+            _engine.AugPullDown = config.AugPullDown;
 
             RequestCrosshairVisibility?.Invoke(IsCrosshairVisible);
             RequestOverlayVisibility?.Invoke(IsOverlayActive);
@@ -386,8 +433,13 @@ namespace PbRecoil.ViewModels
             PlayFeedbackTick(IsSettingsVisible ? 1100 : 700);
         }
 
-        private static List<int> GetActiveMenuIndices()
+        private List<int> GetActiveMenuIndices()
         {
+            if (SelectedMode == MacroMode.AugA3)
+            {
+                // 0: Mode Senjata, 4: Smooth Pull-Down, 3: Crosshair
+                return new List<int> { 0, 4, 3 };
+            }
             // 0: Mode Senjata, 1: Hold Time, 2: Release Delay, 3: Crosshair
             return new List<int> { 0, 1, 2, 3 };
         }
@@ -445,6 +497,9 @@ namespace PbRecoil.ViewModels
                 case 3:
                     IsCrosshairVisible = !IsCrosshairVisible;
                     break;
+                case 4:
+                    AugPullDown = StepNext(AugPullDown, AugPullPresets);
+                    break;
             }
 
             int pitch = (SelectedSettingIndex == 3)
@@ -470,6 +525,9 @@ namespace PbRecoil.ViewModels
                     break;
                 case 3:
                     IsCrosshairVisible = !IsCrosshairVisible;
+                    break;
+                case 4:
+                    AugPullDown = StepPrevious(AugPullDown, AugPullPresets);
                     break;
             }
 

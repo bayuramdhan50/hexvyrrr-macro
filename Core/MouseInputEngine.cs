@@ -29,10 +29,10 @@ namespace PbRecoil.Core
     /// </summary>
     public class MouseInputEngine : IDisposable
     {
-        // ── Parameter Konfigurasi Macro Sequence ─────────────────────────────
         public volatile MacroMode CurrentMode = MacroMode.AssaultNoRecoil;
         public volatile int HoldMs    = 20; // Durasi tahan penekanan LMB (ms) [Default: 20ms]
         public volatile int ReleaseMs = 0;  // Jeda antar penekanan LMB (ms) [Default: 0ms]
+        public volatile int AugPullDown = 3; // Besaran kompensasi pull-down vertikal AUG (pixels per cycle) [0 = lurus / nonaktif, default 3]
 
         private readonly Win32Api.LowLevelMouseProc _hookProc;
         private IntPtr _hookHandle = IntPtr.Zero;
@@ -383,20 +383,51 @@ namespace PbRecoil.Core
         /// <summary>
         /// Mode AUG A3 / HBAR:
         /// - Rapid Fire tap presisi (59ms LMB+J down / 9ms up).
-        /// - Posisi Y stay lurus / tanpa kompensasi pull-down recoil otomatis.
+        /// - Kompensasi pull-down vertikal halus (Smooth Interpolated Recoil).
+        ///   Jika AugPullDown == 0: Stay lurus tanpa pergeseran sumbu Y.
+        ///   Jika AugPullDown > 0: Nilai pull-down didistribusikan secara mikro-step selama durasi tembak (59ms),
+        ///   menghasilkan glide downward yang sangat halus tanpa hentakan mendadak.
         /// </summary>
         private void ExecuteAugCycle()
         {
             ReleaseAllInputs();
 
-            // Rapid fire stabil lurus (59ms down / 9ms up) tanpa pergeseran sumbu Y
             while (_isPhysicalLmbDown && _isEnabled && Win32Api.IsPointBlankForeground())
             {
                 Win32Api.SendMouseDown();
                 Win32Api.SendKeyDown(Win32Api.VK_J);
                 OnRecoilTick?.Invoke();
 
-                PreciseSleep(59);
+                int totalPull = AugPullDown;
+                if (totalPull <= 0)
+                {
+                    // Stay lurus tanpa pull-down
+                    PreciseSleep(59);
+                }
+                else
+                {
+                    // Kompensasi recoil mikro-step halus selama durasi tembak 59ms
+                    const int steps = 5;
+                    const int stepDuration = 11; // 11ms * 4 = 44ms, sisa 15ms di langkah ke-5
+                    int movedSoFar = 0;
+
+                    for (int s = 1; s <= steps; s++)
+                    {
+                        if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
+
+                        int targetMove = (totalPull * s) / steps;
+                        int deltaY = targetMove - movedSoFar;
+                        if (deltaY > 0)
+                        {
+                            Win32Api.SendMouseMove(0, deltaY);
+                            movedSoFar = targetMove;
+                        }
+
+                        int sleepMs = (s == steps) ? (59 - (stepDuration * (steps - 1))) : stepDuration;
+                        PreciseSleep(sleepMs);
+                    }
+                }
+
                 if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) break;
 
                 Win32Api.SendMouseUp();

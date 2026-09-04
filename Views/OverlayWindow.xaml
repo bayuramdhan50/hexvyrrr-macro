@@ -83,17 +83,28 @@
                         <TextBlock Text="{Binding ModeShortBadge}" FontSize="9" FontWeight="Black" Foreground="#00F0FF"/>
                     </Border>
 
-                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1"
+                            Visibility="{Binding IsNoRecoilMode, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Hold: " FontSize="9" Foreground="#8B949E"/>
                             <TextBlock Text="{Binding HoldMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1">
+                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1"
+                            Visibility="{Binding IsNoRecoilMode, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Rel: " FontSize="9" Foreground="#8B949E"/>
                             <TextBlock Text="{Binding ReleaseMs, StringFormat={}{0}ms}" FontSize="9" FontWeight="Bold" Foreground="#00FF88"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- AUG Pull-Down Badge -->
+                    <Border Background="#141B26" CornerRadius="3" Padding="6,2" Margin="0,0,4,4" BorderBrush="#212C3D" BorderThickness="1"
+                            Visibility="{Binding IsAugMode, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Pull-Y: " FontSize="9" Foreground="#8B949E"/>
+                            <TextBlock Text="{Binding AugPullStatusLabel}" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
                         </StackPanel>
                     </Border>
                 </WrapPanel>
@@ -160,9 +171,10 @@
                     </Grid>
                 </Border>
 
-                <!-- ── SECTION 2: MACRO TIMING ─────────────────────────── -->
-                <!-- Menu Item 1: Hold Time -->
+                <!-- ── SECTION 2: MACRO TIMING / PARAMETER ─────────────────── -->
+                <!-- Menu Item 1: Hold Time (No Recoil Mode) -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
+                        Visibility="{Binding IsNoRecoilMode, Converter={StaticResource BoolToVis}}"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=1}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=1}">
                     <Grid>
@@ -183,8 +195,9 @@
                     </Grid>
                 </Border>
 
-                <!-- Menu Item 2: Release Delay -->
+                <!-- Menu Item 2: Release Delay (No Recoil Mode) -->
                 <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
+                        Visibility="{Binding IsNoRecoilMode, Converter={StaticResource BoolToVis}}"
                         BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=2}"
                         Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=2}">
                     <Grid>
@@ -201,6 +214,29 @@
                                    VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="2" Text="{Binding ReleaseMs, StringFormat=◄  {0} ms  ►}" FontSize="9.5" FontWeight="Bold"
                                    Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=2}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Item 4: Smooth Pull-Down Y (AUG Mode) -->
+                <Border CornerRadius="4" Padding="7,3" Margin="0,0,0,2.5" BorderThickness="1"
+                        Visibility="{Binding IsAugMode, Converter={StaticResource BoolToVis}}"
+                        BorderBrush="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBorderConv}, ConverterParameter=4}"
+                        Background="{Binding SelectedSettingIndex, Converter={StaticResource SelectedBgConv}, ConverterParameter=4}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="► " FontWeight="Black" FontSize="9.5" Margin="0,0,2,0"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   Visibility="{Binding SelectedSettingIndex, Converter={StaticResource SelectedIndicatorConv}, ConverterParameter=4}"/>
+                        <TextBlock Grid.Column="1" Text="Smooth Pull-Down (Y)" FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding AugPullStatusLabel, StringFormat=◄  {0}  ►}" FontSize="9.5" FontWeight="Bold"
+                                   Foreground="{Binding SelectedSettingIndex, Converter={StaticResource SelectedFgConv}, ConverterParameter=4}"
                                    VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
