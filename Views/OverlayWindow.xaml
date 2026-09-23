@@ -43,7 +43,7 @@
         </Border.Effect>
 
         <StackPanel>
-            <!-- ── MODE RINGKAS (Ketika Menu Settings F7 Tertutup) ──────────── -->
+            <!-- ── MODE RINGKAS (Ketika Menu Settings F6 Tertutup) ──────────── -->
             <StackPanel Visibility="{Binding IsSettingsVisible, Converter={StaticResource InverseBoolToVis}}">
                 <!-- Header Row -->
                 <Grid>
@@ -137,11 +137,11 @@
                 </Border>
 
                 <!-- Footer Hotkeys Guide -->
-                <TextBlock Text="[F5] ON/OFF  |  [F6] HUD  |  [F7] MENU"
+                <TextBlock Text="[F1] ON/OFF  |  [F5] HIDE  |  [F6] MENU"
                            FontSize="8.5" FontWeight="SemiBold" Foreground="#6E7681" Margin="0,1,0,0"/>
             </StackPanel>
 
-            <!-- ── MODE MENU PENGATURAN INTERAKTIF (Ketika F7 Ditekan) ───── -->
+            <!-- ── MODE MENU PENGATURAN INTERAKTIF (Ketika F6 Ditekan) ───── -->
             <StackPanel Visibility="{Binding IsSettingsVisible, Converter={StaticResource BoolToVis}}">
                 <!-- Header Row -->
                 <Grid Margin="0,0,0,6">
@@ -157,7 +157,7 @@
 
                     <!-- Close Hint Badge -->
                     <Border Grid.Column="1" CornerRadius="3" Padding="5,1" Background="#161F2E" BorderBrush="#263447" BorderThickness="1">
-                        <TextBlock Text="[F7] TUTUP" FontSize="9" FontWeight="Bold" Foreground="#8B949E"/>
+                        <TextBlock Text="[F6] TUTUP" FontSize="9" FontWeight="Bold" Foreground="#8B949E"/>
                     </Border>
                 </Grid>
 

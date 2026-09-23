@@ -24,7 +24,7 @@ namespace PbRecoil.ViewModels
         private bool _isOverlayActive = true;
         private bool _isCrosshairVisible = false;
         private bool _isFiring;
-        private string _statusMessage = "ENGINE STANDBY — Tekan [F5] untuk aktifkan.";
+        private string _statusMessage = "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
 
         // ── Parameter Mode Senjata & Timing ─────────────────────────────────────
         private MacroMode _selectedMode = MacroMode.AssaultNoRecoil;
@@ -58,7 +58,13 @@ namespace PbRecoil.ViewModels
         public bool IsOverlayActive
         {
             get => _isOverlayActive;
-            set => SetField(ref _isOverlayActive, value);
+            set
+            {
+                if (SetField(ref _isOverlayActive, value))
+                {
+                    _hotkeyManager.IsOverlayActive = value;
+                }
+            }
         }
 
         public bool IsCrosshairVisible
@@ -347,7 +353,7 @@ namespace PbRecoil.ViewModels
                 });
             };
 
-            // F5 — Toggle Engine ON/OFF
+            // F1 — Toggle Engine ON/OFF
             _hotkeyManager.OnToggleEngine += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(() =>
@@ -356,13 +362,13 @@ namespace PbRecoil.ViewModels
                 });
             };
 
-            // F6 — Toggle HUD Overlay
+            // F5 — Toggle HUD Overlay (Hide / Show)
             _hotkeyManager.OnToggleOverlay += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(ToggleOverlay);
             };
 
-            // F7 — Toggle Menu Pengaturan HUD
+            // F6 — Toggle Menu Pengaturan HUD
             _hotkeyManager.OnToggleSettings += () =>
             {
                 WpfApplication.Current?.Dispatcher.Invoke(ToggleSettingsVisibility);
@@ -520,13 +526,16 @@ namespace PbRecoil.ViewModels
             string label = IsQcWeapon ? $"{WeaponDisplayLabel} [{QcDisplayLabel}]" : ModeShortBadge;
             StatusMessage = IsEngineActive
                 ? $"[{label}] AKTIF — Tahan LMB untuk aksi."
-                : "ENGINE STANDBY — Tekan [F5] untuk aktifkan.";
+                : "ENGINE STANDBY — Tekan [F1] untuk aktifkan.";
         }
 
         public void Initialize()
         {
             var savedConfig = ConfigService.LoadConfig();
             ApplyConfigValues(savedConfig);
+
+            _hotkeyManager.IsOverlayActive = IsOverlayActive;
+            _hotkeyManager.IsSettingsOpen = IsSettingsVisible;
 
             _engine.Start();
             _hotkeyManager.Start();
@@ -637,6 +646,8 @@ namespace PbRecoil.ViewModels
 
         public void SelectNextSetting()
         {
+            if (!IsOverlayActive || !IsSettingsVisible) return;
+
             var activeIndices = GetActiveMenuIndices();
             int currentPos = activeIndices.IndexOf(SelectedSettingIndex);
 
@@ -655,6 +666,8 @@ namespace PbRecoil.ViewModels
 
         public void SelectPreviousSetting()
         {
+            if (!IsOverlayActive || !IsSettingsVisible) return;
+
             var activeIndices = GetActiveMenuIndices();
             int currentPos = activeIndices.IndexOf(SelectedSettingIndex);
 
@@ -673,6 +686,8 @@ namespace PbRecoil.ViewModels
 
         public void IncreaseCurrentSetting()
         {
+            if (!IsOverlayActive || !IsSettingsVisible) return;
+
             switch (SelectedSettingIndex)
             {
                 case 0:
@@ -706,6 +721,8 @@ namespace PbRecoil.ViewModels
 
         public void DecreaseCurrentSetting()
         {
+            if (!IsOverlayActive || !IsSettingsVisible) return;
+
             switch (SelectedSettingIndex)
             {
                 case 0:

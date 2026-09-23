@@ -17,6 +17,7 @@ namespace PbRecoil.Core
         public event Action? OnValueRight;
 
         public volatile bool IsSettingsOpen;
+        public volatile bool IsOverlayActive = true;
 
         public void Start()
         {
@@ -33,9 +34,9 @@ namespace PbRecoil.Core
 
         private void HotkeyLoop()
         {
+            bool wasF1 = false;
             bool wasF5 = false;
             bool wasF6 = false;
-            bool wasF7 = false;
             bool wasUp = false;
             bool wasDown = false;
             bool wasLeft = false;
@@ -43,23 +44,23 @@ namespace PbRecoil.Core
 
             while (!_isDisposed)
             {
-                // F5 — Toggle Engine ON/OFF
+                // F1 — Toggle Engine ON/OFF
+                var isF1 = Win32Api.IsKeyPressed(Win32Api.VK_F1);
+                if (isF1 && !wasF1) OnToggleEngine?.Invoke();
+                wasF1 = isF1;
+
+                // F5 — Toggle / Hide HUD Overlay on screen
                 var isF5 = Win32Api.IsKeyPressed(Win32Api.VK_F5);
-                if (isF5 && !wasF5) OnToggleEngine?.Invoke();
+                if (isF5 && !wasF5) OnToggleOverlay?.Invoke();
                 wasF5 = isF5;
 
-                // F6 — Toggle HUD Overlay on screen
+                // F6 — Toggle Menu Pengaturan HUD
                 var isF6 = Win32Api.IsKeyPressed(Win32Api.VK_F6);
-                if (isF6 && !wasF6) OnToggleOverlay?.Invoke();
+                if (isF6 && !wasF6) OnToggleSettings?.Invoke();
                 wasF6 = isF6;
 
-                // F7 — Toggle Menu Pengaturan HUD
-                var isF7 = Win32Api.IsKeyPressed(Win32Api.VK_F7);
-                if (isF7 && !wasF7) OnToggleSettings?.Invoke();
-                wasF7 = isF7;
-
-                // Tombol Panah (Arrow Keys) aktif saat menu pengaturan HUD terbuka
-                if (IsSettingsOpen)
+                // Tombol Panah (Arrow Keys) hanya aktif saat menu pengaturan HUD terbuka DAN HUD tidak dalam kondisi hide (lock saat hide)
+                if (IsSettingsOpen && IsOverlayActive)
                 {
                     var isUp = Win32Api.IsKeyPressed(Win32Api.VK_UP);
                     if (isUp && !wasUp) OnNavigateUp?.Invoke();
