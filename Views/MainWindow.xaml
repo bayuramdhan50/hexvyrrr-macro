@@ -430,35 +430,33 @@
 
                                 <!-- All Sniper Mode Flow -->
                                 <StackPanel Orientation="Horizontal" Visibility="{Binding IsAllSniperMode, Converter={StaticResource BoolToVis}}">
-                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB/N (25ms)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB/J (20ms)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3 (15ms)" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
+                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="RMB (10ms)" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#3B1435" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Q (15ms)" FontSize="8" FontWeight="Bold" Foreground="#FF6BFF"/></Border>
+                                    <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3 (10ms)" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="1 (15ms)" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
+                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="1 (10ms)" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="LMB/N ↑" FontSize="7.5" FontWeight="Bold" Foreground="#8B949E"/></Border>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="↻ RECOVERY" FontSize="7.5" FontWeight="Bold" Foreground="#8B949E"/></Border>
                                 </StackPanel>
 
                                 <!-- Kar Mode Flow -->
                                 <StackPanel Orientation="Horizontal" Visibility="{Binding IsKarMode, Converter={StaticResource BoolToVis}}">
-                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="RMB/J (Scope)" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB/J (20ms)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB/N (Fire)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <Border Background="#162D4A" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="RMB (10ms)" FontSize="8" FontWeight="Bold" Foreground="#00F0FF"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
+                                    <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3 (10ms)" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#3B1435" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="Q" FontSize="8" FontWeight="Bold" Foreground="#FF6BFF"/></Border>
+                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="1 (10ms)" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#123B22" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="1" FontSize="8" FontWeight="Bold" Foreground="#00FF88"/></Border>
-                                    <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="1,0"/>
-                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="RELEASE" FontSize="7.5" FontWeight="Bold" Foreground="#8B949E"/></Border>
+                                    <Border Background="#162233" CornerRadius="3" Padding="4,2"><TextBlock Text="↻ RECOVERY" FontSize="7.5" FontWeight="Bold" Foreground="#8B949E"/></Border>
                                 </StackPanel>
 
                                 <!-- SG Mode Flow -->
                                 <StackPanel Orientation="Horizontal" Visibility="{Binding IsSgMode, Converter={StaticResource BoolToVis}}">
-                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB/N (Fire)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
+                                    <Border Background="#5A0D1B" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="LMB/J (Fire)" FontSize="8" FontWeight="Bold" Foreground="#FF8899"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="2,0"/>
                                     <Border Background="#3B2610" CornerRadius="3" Padding="4,2" Margin="0,0,2,0"><TextBlock Text="3 (Melee)" FontSize="8" FontWeight="Bold" Foreground="#FFA500"/></Border>
                                     <TextBlock Text="➔" FontSize="7.5" Foreground="#6E7681" VerticalAlignment="Center" Margin="2,0"/>

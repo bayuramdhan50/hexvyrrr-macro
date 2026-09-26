@@ -37,13 +37,13 @@ namespace PbRecoil.Core
         AugA3           = 1, // AUG A3 / HBAR Precision Recoil (Dynamic Pull-Down + Rapid Fire)
         AllSniperNormal = 2, // All Sniper Normal (Scope + 3-Q-1, Delay 750ms)
         AllSniperQc50   = 3, // All Sniper QC 50% (Scope + 3-Q-1, Delay 480ms)
-        AllSniperQc75   = 4, // All Sniper QC 75% (Scope + 3-Q-1, Delay 245ms)
+        AllSniperQc75   = 4, // All Sniper QC 75% (Fire [J] + Scope RMB + 3-1, Delay 245ms)
         KarNormal       = 5, // Kar98k Normal (Scope + 3-Q-1, Delay 890ms)
         KarQc50         = 6, // Kar98k QC 50% (Scope + 3-Q-1, Delay 590ms)
-        KarQc75         = 7, // Kar98k QC 75% (Scope + 3-Q-1, Delay 300ms)
-        SgNormal        = 8, // SG Normal (Fire + 3-1, Delay 750ms)
-        SgQc50          = 9, // SG QC 50% (Fire + 3-1, Delay 480ms)
-        SgQc75          = 10 // SG QC 75% (Fire + 3-1, Delay 245ms)
+        KarQc75         = 7, // Kar98k QC 75% (Fire [J] + Scope RMB + 3-1, Delay 300ms)
+        SgNormal        = 8, // SG Normal (Fire [J] + 3-1, Delay 750ms)
+        SgQc50          = 9, // SG QC 50% (Fire [J] + 3-1, Delay 480ms)
+        SgQc75          = 10 // SG QC 75% (Fire [J] + 3-1, Delay 245ms)
     }
 
     /// <summary>
@@ -245,10 +245,10 @@ namespace PbRecoil.Core
                     ExecuteSniperQc50Cycle();
                     break;
                 case MacroMode.AllSniperQc75:
-                    ExecuteAllSniperCycle(fireMs: 20, keyHoldMs: 10, keyRelMs: 1, endRecoveryMs: 245);
+                    ExecuteSniperFastQcCycle(fireMs: 20, rmbMs: 10, keyHoldMs: 10, keyRelMs: 2, endRecoveryMs: 245);
                     break;
 
-                // ── KAR (Kar98k Scope + Fire + 3-Q-1, MS timing bawaan GHUB) ──
+                // ── KAR (Kar98k QC 75 Fast Cycle / Normal Multi-QC) ───────────
                 case MacroMode.KarNormal:
                     ExecuteSniperNoQcCycle();
                     break;
@@ -256,7 +256,7 @@ namespace PbRecoil.Core
                     ExecuteSniperQc50Cycle();
                     break;
                 case MacroMode.KarQc75:
-                    ExecuteKarCycle(300);
+                    ExecuteSniperFastQcCycle(fireMs: 20, rmbMs: 10, keyHoldMs: 10, keyRelMs: 2, endRecoveryMs: 300);
                     break;
 
                 // ── SHOTGUN (Fire + 3-1 Quick Switch) ─────────────────────────
@@ -505,106 +505,53 @@ namespace PbRecoil.Core
         }
 
         /// <summary>
-        /// Mode All Sniper Tahan (Sesuai Konfigurasi GHUB Multi-QC):
-        /// [LMB/N Down] -> fireMs -> [3 Down] -> keyHoldMs -> [3 Up] -> keyRelMs ->
-        /// [Q Down] -> keyHoldMs -> [Q Up] -> keyRelMs -> [1 Down] -> keyHoldMs -> [1 Up] -> keyRelMs ->
-        /// [LMB/N Up] -> End Recovery Delay
+        /// Mode Sniper Fast QC (All Sniper QC 75% & Kar98k QC 75%):
+        /// 1. Fire (LMB Down + Key J Down) -> Tahan fireMs (20ms) -> Lepas LMB & Key J -> jeda keyRelMs (2ms)
+        /// 2. Scope Tap (RMB Down) -> rmbMs (10ms) -> RMB Up -> jeda keyRelMs (2ms)
+        /// 3. Switch ke Melee (Key 3 Down) -> keyHoldMs (10ms) -> Key 3 Up -> jeda keyRelMs (2ms)
+        /// 4. Switch ke Primary (Key 1 Down) -> keyHoldMs (10ms) -> Key 1 Up
+        /// 5. End Recovery Delay (245ms untuk All Sniper / 300ms untuk Kar98k)
         /// </summary>
-        private void ExecuteAllSniperCycle(int fireMs, int keyHoldMs, int keyRelMs, int endRecoveryMs)
+        private void ExecuteSniperFastQcCycle(int fireMs, int rmbMs, int keyHoldMs, int keyRelMs, int endRecoveryMs)
         {
             ReleaseAllInputs();
 
-            // 1. Fire (LMB Down + Key N) -> Tahan selama fireMs (default 25ms pada QC 50%)
+            // 1. Fire (LMB Down + Key J Down -> fireMs -> LMB Up + Key J Up)
             Win32Api.SendMouseDown();
-            Win32Api.SendKeyDown(Win32Api.VK_N);
+            Win32Api.SendKeyDown(Win32Api.VK_J);
             OnRecoilTick?.Invoke();
             PreciseSleep(fireMs);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 2. Switch ke Melee (Key 3: Tahan keyHoldMs -> Lepas -> Jeda keyRelMs)
-            Win32Api.SendKeyDown(Win32Api.VK_3);
-            PreciseSleep(keyHoldMs);
-            Win32Api.SendKeyUp(Win32Api.VK_3);
-            PreciseSleep(keyRelMs);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 3. Quick Switch (Key Q: Tahan keyHoldMs -> Lepas -> Jeda keyRelMs)
-            Win32Api.SendKeyDown(Win32Api.VK_Q);
-            PreciseSleep(keyHoldMs);
-            Win32Api.SendKeyUp(Win32Api.VK_Q);
-            PreciseSleep(keyRelMs);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 4. Switch Primary Weapon (Key 1: Tahan keyHoldMs -> Lepas -> Jeda keyRelMs)
-            Win32Api.SendKeyDown(Win32Api.VK_1);
-            PreciseSleep(keyHoldMs);
-            Win32Api.SendKeyUp(Win32Api.VK_1);
-            PreciseSleep(keyRelMs);
-
-            // 5. Release Fire (LMB Up + Key N Up)
             Win32Api.SendMouseUp();
-            Win32Api.SendKeyUp(Win32Api.VK_N);
-
-            // 6. Recovery Delay sebelum tembakan berikutnya
-            PreciseSleep(endRecoveryMs);
-        }
-
-        /// <summary>
-        /// Mode KAR (Kar98k) Tahan (Scope + Fire + 3-Q-1 Switch + Release + Delay):
-        /// [RMB/J Down] -> 30ms Scope In -> [LMB/N Down] -> 25ms Fire -> [3 Down] -> 20ms -> [3 Up] -> 10ms ->
-        /// [Q Down] -> 20ms -> [Q Up] -> 10ms -> [1 Down] -> 20ms -> [1 Up] -> 10ms ->
-        /// [RMB/J Up] [LMB/N Up] -> End Recovery Delay (890ms / 590ms / 300ms)
-        /// </summary>
-        private void ExecuteKarCycle(int endRecoveryMs)
-        {
-            ReleaseAllInputs();
-
-            // 1. Scope In (RMB Down + Key J) -> Mengirim event mouse & hardware scancode key J
-            Win32Api.SendRightMouseDown();
-            Win32Api.SendKeyDown(Win32Api.VK_J);
-            PreciseSleep(30);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 2. Fire (LMB Down + Key N) -> Tembak dalam status scoped
-            Win32Api.SendMouseDown();
-            Win32Api.SendKeyDown(Win32Api.VK_N);
-            OnRecoilTick?.Invoke();
-            PreciseSleep(25);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 3. Switch ke Melee (Key 3)
-            Win32Api.SendKeyDown(Win32Api.VK_3);
-            PreciseSleep(20);
-            Win32Api.SendKeyUp(Win32Api.VK_3);
-            PreciseSleep(10);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 4. Quick Switch (Key Q)
-            Win32Api.SendKeyDown(Win32Api.VK_Q);
-            PreciseSleep(20);
-            Win32Api.SendKeyUp(Win32Api.VK_Q);
-            PreciseSleep(10);
-            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
-
-            // 5. Switch Primary Weapon (Key 1)
-            Win32Api.SendKeyDown(Win32Api.VK_1);
-            PreciseSleep(20);
-            Win32Api.SendKeyUp(Win32Api.VK_1);
-            PreciseSleep(10);
-
-            // 6. Release Inputs (RMB + J + LMB + N)
-            Win32Api.SendRightMouseUp();
             Win32Api.SendKeyUp(Win32Api.VK_J);
-            Win32Api.SendMouseUp();
-            Win32Api.SendKeyUp(Win32Api.VK_N);
+            PreciseSleep(keyRelMs);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
-            // 7. Recovery Delay sebelum tembakan berikutnya
+            // 2. Scope Tap (RMB Down -> rmbMs -> RMB Up)
+            Win32Api.SendRightMouseDown();
+            PreciseSleep(rmbMs);
+            Win32Api.SendRightMouseUp();
+            PreciseSleep(keyRelMs);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 3. Switch ke Melee (Key 3: Down -> keyHoldMs -> Up)
+            Win32Api.SendKeyDown(Win32Api.VK_3);
+            PreciseSleep(keyHoldMs);
+            Win32Api.SendKeyUp(Win32Api.VK_3);
+            PreciseSleep(keyRelMs);
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
+
+            // 4. Switch Primary Weapon (Key 1: Down -> keyHoldMs -> Up)
+            Win32Api.SendKeyDown(Win32Api.VK_1);
+            PreciseSleep(keyHoldMs);
+            Win32Api.SendKeyUp(Win32Api.VK_1);
+
+            // 5. Recovery Delay sebelum siklus berikutnya
             PreciseSleep(endRecoveryMs);
         }
 
         /// <summary>
-        /// Mode SG Tahan (Fire + 3-1 Quick Switch + Delay):
-        /// [LMB/N Down] -> 20ms -> [LMB/N Up] -> 10ms ->
+        /// Mode SG Tahan (Fire LMB + Key J + 3-1 Quick Switch + Delay):
+        /// [LMB/J Down] -> 20ms -> [LMB/J Up] -> 10ms ->
         /// [3 Down] -> 20ms -> [3 Up] -> 10ms ->
         /// [1 Down] -> 20ms -> [1 Up] -> End Recovery Delay (750ms / 480ms / 245ms)
         /// </summary>
@@ -612,23 +559,23 @@ namespace PbRecoil.Core
         {
             ReleaseAllInputs();
 
-            // 1. Fire (LMB/N Down -> 20ms -> LMB/N Up)
+            // 1. Fire (LMB/J Down -> 20ms -> LMB/J Up)
             Win32Api.SendMouseDown();
-            Win32Api.SendKeyDown(Win32Api.VK_N);
+            Win32Api.SendKeyDown(Win32Api.VK_J);
             OnRecoilTick?.Invoke();
 
             PreciseSleep(20);
             Win32Api.SendMouseUp();
-            Win32Api.SendKeyUp(Win32Api.VK_N);
+            Win32Api.SendKeyUp(Win32Api.VK_J);
             PreciseSleep(10);
-            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
             // 2. Switch ke Melee (Key 3)
             Win32Api.SendKeyDown(Win32Api.VK_3);
             PreciseSleep(20);
             Win32Api.SendKeyUp(Win32Api.VK_3);
             PreciseSleep(10);
-            if (!_isPhysicalLmbDown || !_isEnabled) { ReleaseAllInputs(); return; }
+            if (!_isPhysicalLmbDown || !_isEnabled || !Win32Api.IsPointBlankForeground()) { ReleaseAllInputs(); return; }
 
             // 3. Switch Primary Weapon (Key 1)
             Win32Api.SendKeyDown(Win32Api.VK_1);

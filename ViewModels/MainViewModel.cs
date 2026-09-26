@@ -201,13 +201,13 @@ namespace PbRecoil.ViewModels
             MacroMode.AugA3           => $"AUG A3 Logitech Recoil (Burst 8/5 peluru Y:{AugPullStatusLabel} -> Sustained Spray).",
             MacroMode.AllSniperNormal => "Sniper No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
             MacroMode.AllSniperQc50   => "Sniper QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
-            MacroMode.AllSniperQc75   => "Sniper QC 75% Scope + Fire + 3-Q-1 ultra cepat (245ms).",
+            MacroMode.AllSniperQc75   => "Sniper QC 75% (Fire J 20ms -> Scope RMB 10ms -> Switch 3-1 -> Delay 245ms).",
             MacroMode.KarNormal       => "Kar98k No QC (Scope 82ms -> Fire 80ms -> 3-1 switch -> Recovery 600ms).",
             MacroMode.KarQc50         => "Kar98k QC 50% (Scope 40ms -> Fire 65ms -> 3-1 switch 35ms -> Recovery 350ms).",
-            MacroMode.KarQc75         => "Kar98k Scope + Fire + 3-Q-1 ultra cepat bawaan GHUB (300ms).",
-            MacroMode.SgNormal        => "Shotgun tembak + switch 3-1 interval standar (750ms).",
-            MacroMode.SgQc50          => "Shotgun tembak + switch 3-1 dengan timing QC 50% (480ms).",
-            MacroMode.SgQc75          => "Shotgun tembak + switch 3-1 ultra cepat (245ms).",
+            MacroMode.KarQc75         => "Kar98k QC 75% (Fire J 20ms -> Scope RMB 10ms -> Switch 3-1 -> Delay 300ms).",
+            MacroMode.SgNormal        => "Shotgun tembak (LMB/J) + switch 3-1 interval standar (750ms).",
+            MacroMode.SgQc50          => "Shotgun tembak (LMB/J) + switch 3-1 dengan timing QC 50% (480ms).",
+            MacroMode.SgQc75          => "Shotgun tembak (LMB/J) + switch 3-1 ultra cepat (245ms).",
             _                         => ""
         };
 

@@ -27,8 +27,8 @@ namespace PbRecoil.Core
         public const byte VK_1 = 0x31; // Primary Weapon ('1')
         public const byte VK_3 = 0x33; // Melee / Knife ('3')
         public const byte VK_Q = 0x51; // Quick Switch ('Q')
-        public const byte VK_J = 0x4A; // Secondary Scope Key ('J')
-        public const byte VK_N = 0x4E; // Secondary Fire Key ('N')
+        public const byte VK_J = 0x4A; // In-Game Attack / Fire Key ('J')
+        public const byte VK_N = 0x4E; // Alternate In-Game Attack Key ('N')
 
         // ── Function & Arrow Key Virtual Keys ─────────────────────────────────
         public const int VK_LEFT    = 0x25;
